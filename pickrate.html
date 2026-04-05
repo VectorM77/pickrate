@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pick Rate Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a; --surface: #111827; --surface2: #1a2235; --border: #1f2d45;
+    --accent: #00d4ff; --accent2: #00ff88; --warn: #ff6b35; --text: #e8edf5; --muted: #5a6a82;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
+  .app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 0 120px; }
+
+  /* Sync */
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); display: inline-block; margin-left: 6px; transition: background 0.3s; flex-shrink: 0; }
+  .sync-dot.synced { background: var(--accent2); }
+  .sync-dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
+  .sync-dot.error { background: var(--warn); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* Header */
+  .header { padding: 16px 16px 10px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, #0d1525 0%, transparent 100%); position: sticky; top: 0; z-index: 10; backdrop-filter: blur(12px); }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: var(--accent); text-shadow: 0 0 20px rgba(0,212,255,0.4); }
+  .header-right { display: flex; align-items: center; gap: 6px; }
+  .sync-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); }
+  .rate-label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+  .rate-big { font-family: 'Bebas Neue', sans-serif; font-size: 38px; line-height: 1; transition: color 0.4s; }
+  .rate-unit { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-left: 4px; }
+  .target-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .progress-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1), background 0.4s; }
+
+  /* Date strip */
+  .date-strip { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 88px; z-index: 9; }
+  .date-strip label { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); white-space: nowrap; }
+  .date-nav-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--accent); font-size: 16px; padding: 5px 10px; cursor: pointer; line-height: 1; flex-shrink: 0; }
+  .date-display { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; padding: 7px 10px; text-align: center; cursor: pointer; user-select: none; }
+  .date-display:hover { border-color: var(--accent); }
+  .btn-today { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--accent); font-family: 'DM Mono', monospace; font-size: 11px; padding: 7px 10px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+  /* Hidden real date input for picker */
+  #datePickerInput { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
+
+  /* Tabs */
+  .tabs { display: flex; padding: 0 16px; gap: 4px; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 130px; z-index: 8; }
+  .tab { flex: 1; padding: 10px 2px; text-align: center; font-size: 10px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; text-transform: uppercase; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* Sections */
+  .section { display: none; padding: 14px 16px; }
+  .section.active { display: block; }
+
+  /* Form */
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
+  .form-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; color: var(--accent); margin-bottom: 12px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .input-group { display: flex; flex-direction: column; gap: 5px; }
+  .input-group label { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .input-group input { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; padding: 9px 12px; width: 100%; outline: none; transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none; }
+  .input-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,212,255,0.1); }
+  .input-group input::placeholder { color: var(--border); }
+  .calc-display { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; color: var(--muted); min-height: 46px; display: flex; align-items: center; }
+  .calc-display.has-value { color: var(--accent2); }
+  .btn-log { width: 100%; padding: 13px; background: var(--accent); color: var(--bg); font-family: 'Bebas Neue', sans-serif; font-size: 19px; letter-spacing: 2px; border: none; border-radius: 12px; cursor: pointer; transition: transform 0.1s, box-shadow 0.2s, opacity 0.2s; box-shadow: 0 4px 20px rgba(0,212,255,0.3); }
+  .btn-log:active { transform: scale(0.97); }
+  .btn-log.dimmed { opacity: 0.4; }
+  .btn-log.edit-mode { background: var(--accent2); box-shadow: 0 4px 20px rgba(0,255,136,0.3); }
+  .btn-cancel { width: 100%; padding: 11px; background: none; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 13px; cursor: pointer; margin-top: 8px; }
+
+  /* Hours / breaks */
+  .hours-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 11px 14px; margin-bottom: 14px; }
+  .hours-row label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
+  .hours-row input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 20px; padding: 5px 10px; width: 80px; text-align: center; outline: none; -webkit-appearance: none; }
+  .hours-row input:focus { border-color: var(--accent); }
+  .break-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 12px; padding: 6px 10px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .break-btn.active { background: rgba(0,212,255,0.12); border-color: var(--accent); color: var(--accent); }
+
+  /* Order list */
+  .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+  .wrong-date-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 9px; padding: 3px 7px; cursor: pointer; letter-spacing: 0.5px; }
+  .move-date-banner { display: none; background: var(--surface); border: 1px solid var(--accent); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .move-date-banner p { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  .move-date-row { display: flex; gap: 8px; align-items: center; }
+  .move-date-row input[type=date] { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; padding: 7px 10px; outline: none; color-scheme: dark; }
+  .btn-move { background: var(--accent); border: none; border-radius: 8px; color: var(--bg); font-family: 'Bebas Neue', sans-serif; font-size: 14px; padding: 8px 12px; cursor: pointer; }
+  .btn-close { background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; padding: 8px 10px; cursor: pointer; }
+
+  .order-list { display: flex; flex-direction: column; gap: 8px; }
+  .order-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 11px 12px; display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+  .order-item.editing { border-color: var(--accent2); background: rgba(0,255,136,0.05); }
+  @keyframes slideIn { from { opacity:0; transform:translateY(8px) scale(0.97); } to { opacity:1; transform:none; } }
+  .order-num { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--muted); width: 24px; flex-shrink: 0; }
+  .order-details { flex: 1; min-width: 0; }
+  .order-times { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text); margin-bottom: 2px; }
+  .order-meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .order-rate { text-align: right; flex-shrink: 0; }
+  .order-rate .rv { font-family: 'Bebas Neue', sans-serif; font-size: 22px; line-height: 1; }
+  .order-rate .rl { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); }
+  .on-track { color: var(--accent2); } .off-track { color: var(--warn); }
+  .order-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+  .icon-btn { background: none; border: none; color: var(--muted); font-size: 14px; cursor: pointer; padding: 3px 6px; border-radius: 6px; line-height: 1; }
+  .icon-btn:active { background: rgba(255,255,255,0.08); }
+
+  /* Stats */
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+  .stat-card.full { grid-column: 1 / -1; }
+  .stat-label { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 4px; }
+  .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 34px; line-height: 1; }
+  .stat-sub { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .on-target .stat-val { color: var(--accent2); } .below .stat-val { color: var(--warn); }
+
+  /* Verdict */
+  .verdict { border-radius: 14px; padding: 12px 16px; text-align: center; margin-bottom: 14px; border: 1px solid; }
+  .verdict.good { background: rgba(0,255,136,0.08); border-color: rgba(0,255,136,0.3); color: var(--accent2); }
+  .verdict.bad { background: rgba(255,107,53,0.08); border-color: rgba(255,107,53,0.3); color: var(--warn); }
+  .verdict-icon { font-size: 22px; margin-bottom: 3px; }
+  .verdict-text { font-size: 14px; font-weight: 600; }
+  .verdict-sub { font-family: 'DM Mono', monospace; font-size: 11px; opacity: 0.7; margin-top: 2px; }
+
+  /* Charts */
+  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
+  .chart-title { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; }
+  .chart-area { height: 110px; }
+  canvas { width: 100% !important; }
+
+  /* Week */
+  .week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .week-nav-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--accent); font-size: 18px; padding: 6px 14px; cursor: pointer; }
+  .week-nav-label { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+  .week-day { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .week-day-name { font-family: 'Bebas Neue', sans-serif; font-size: 16px; width: 40px; flex-shrink: 0; }
+  .week-bar-wrap { flex: 1; }
+  .week-bar-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 3px; }
+  .week-bar-fill { height: 100%; border-radius: 3px; }
+  .week-meta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+  .week-rate { font-family: 'Bebas Neue', sans-serif; font-size: 24px; width: 48px; text-align: right; flex-shrink: 0; }
+
+  /* History */
+  .hist-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .hist-date { font-family: 'Bebas Neue', sans-serif; font-size: 17px; margin-bottom: 2px; }
+  .hist-meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .hist-rate { font-family: 'Bebas Neue', sans-serif; font-size: 26px; width: 52px; text-align: right; flex-shrink: 0; }
+
+  /* Import */
+  .import-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
+  .import-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; color: var(--accent); margin-bottom: 6px; }
+  .import-card p { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
+  .import-lbl { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px; margin-top: 10px; }
+  textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; padding: 10px 12px; outline: none; resize: vertical; color-scheme: dark; }
+  textarea:focus { border-color: var(--accent); }
+  .btn-action { width: 100%; padding: 12px; background: var(--surface2); border: 1px solid var(--accent); border-radius: 10px; color: var(--accent); font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; cursor: pointer; margin-top: 10px; }
+  .btn-action.muted { border-color: var(--border); color: var(--muted); }
+
+  /* Misc */
+  .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); }
+  .empty-icon { font-size: 40px; margin-bottom: 10px; opacity: 0.4; }
+  .empty-state p { font-family: 'DM Mono', monospace; font-size: 12px; line-height: 1.6; }
+  .clear-btn { width: 100%; padding: 11px; background: none; border: 1px solid var(--border); border-radius: 10px; color: var(--warn); font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; margin-top: 14px; }
+  .toast { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 9px 18px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; z-index: 100; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Loading */
+  .loading-screen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; gap: 16px; }
+  .loading-screen .logo-big { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 4px; color: var(--accent); text-shadow: 0 0 30px rgba(0,212,255,0.5); }
+  .loading-bar { width: 120px; height: 3px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .loading-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; animation: loading 1.2s ease-in-out infinite; }
+  @keyframes loading { 0%{width:0%;margin-left:0} 50%{width:60%;margin-left:20%} 100%{width:0%;margin-left:100%} }
+  .loading-msg { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="loading-screen" id="loadingScreen">
+  <div class="logo-big">PICKRATE</div>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+  <div class="loading-msg" id="loadingMsg">Connecting to cloud...</div>
+</div>
+
+<div class="app" id="mainApp" style="display:none">
+
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">PICKRATE</div>
+      <div class="header-right">
+        <span class="sync-label" id="syncLabel">SYNC</span>
+        <span class="sync-dot" id="syncDot"></span>
+      </div>
+    </div>
+    <div class="rate-label-row">
+      <div><span class="rate-big" id="liveRate">—</span><span class="rate-unit">u/hr</span></div>
+      <div class="target-label">TARGET: 160</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="date-strip">
+    <label>Viewing</label>
+    <button class="date-nav-btn" id="prevDayBtn">‹</button>
+    <div class="date-display" id="dateDisplay">—</div>
+    <button class="date-nav-btn" id="nextDayBtn">›</button>
+    <input type="date" id="datePickerInput">
+    <button class="btn-today" id="todayBtn">TODAY</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" id="tab-btn-log">Log</div>
+    <div class="tab" id="tab-btn-summary">Summary</div>
+    <div class="tab" id="tab-btn-week">Week</div>
+    <div class="tab" id="tab-btn-history">History</div>
+    <div class="tab" id="tab-btn-import">Import</div>
+  </div>
+
+  <!-- LOG -->
+  <div class="section active" id="tab-log">
+    <div class="form-card">
+      <h3 id="formTitle">NEW ORDER</h3>
+      <div class="two-col">
+        <div class="input-group">
+          <label>Start Time</label>
+          <input type="number" id="startTime" placeholder="0800" inputmode="numeric">
+        </div>
+        <div class="input-group">
+          <label>End Time</label>
+          <input type="number" id="endTime" placeholder="0845" inputmode="numeric">
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="input-group">
+          <label>Cases Picked</label>
+          <input type="number" id="cases" placeholder="0" inputmode="numeric">
+        </div>
+        <div class="input-group">
+          <label>Duration (min)</label>
+          <div class="calc-display" id="durationDisplay">—</div>
+        </div>
+      </div>
+      <button class="btn-log dimmed" id="logBtn">LOG ORDER</button>
+      <button class="btn-cancel" id="cancelBtn" style="display:none">CANCEL EDIT</button>
+    </div>
+    <div class="section-title">
+      <span>ORDERS — <span id="orderListDateLabel" style="color:var(--accent)"></span></span>
+      <button class="wrong-date-btn" id="wrongDateBtn">WRONG DATE?</button>
+    </div>
+    <div class="move-date-banner" id="moveDateBanner">
+      <p>Move this day's orders to a different date key:</p>
+      <div class="move-date-row">
+        <input type="date" id="moveToDate" style="color-scheme:dark">
+        <button class="btn-move" id="moveDateConfirm">MOVE</button>
+        <button class="btn-close" id="moveDateClose">✕</button>
+      </div>
+    </div>
+    <div class="order-list" id="orderList"></div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="section" id="tab-summary">
+    <div class="hours-row">
+      <label>Hours Worked</label>
+      <input type="number" id="hoursWorked" placeholder="8.0" step="0.5" inputmode="decimal">
+    </div>
+    <div class="hours-row" style="margin-top:-6px">
+      <label>Breaks Taken</label>
+      <div style="display:flex;gap:6px">
+        <button class="break-btn" id="break0">None</button>
+        <button class="break-btn" id="break1">1 x 15 min</button>
+        <button class="break-btn active" id="break2">2 x 15 min</button>
+      </div>
+    </div>
+    <div id="verdictBanner"></div>
+    <div class="summary-grid">
+      <div class="stat-card"><div class="stat-label">Orders</div><div class="stat-val" id="statOrders">0</div></div>
+      <div class="stat-card"><div class="stat-label">Total Cases</div><div class="stat-val" id="statCases">0</div></div>
+      <div class="stat-card"><div class="stat-label">Avg / Order</div><div class="stat-val" id="statAvg">—</div></div>
+      <div class="stat-card"><div class="stat-label">Best Order</div><div class="stat-val" id="statBest">—</div><div class="stat-sub">u/hr</div></div>
+      <div class="stat-card full" id="overallCard">
+        <div class="stat-label">Overall Cases / Hour</div>
+        <div class="stat-val" id="statOverall">—</div>
+        <div class="stat-sub" id="statOverallSub">Enter hours worked above</div>
+        <div class="stat-sub" id="statEffHours" style="margin-top:3px"></div>
+      </div>
+    </div>
+    <div class="chart-wrap"><div class="chart-title">CASES PER ORDER</div><div class="chart-area"><canvas id="barChart"></canvas></div></div>
+    <div class="chart-wrap"><div class="chart-title">CUMULATIVE CASES</div><div class="chart-area"><canvas id="lineChart"></canvas></div></div>
+  </div>
+
+  <!-- WEEK -->
+  <div class="section" id="tab-week">
+    <div class="week-nav">
+      <button class="week-nav-btn" id="prevWeekBtn">&#8249;</button>
+      <div class="week-nav-label" id="weekNavLabel"></div>
+      <button class="week-nav-btn" id="nextWeekBtn">&#8250;</button>
+    </div>
+    <div id="weekView"></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="section" id="tab-history">
+    <div id="historyView"></div>
+    <button class="clear-btn" id="clearAllBtn">CLEAR ALL DATA</button>
+  </div>
+
+  <!-- IMPORT -->
+  <div class="section" id="tab-import">
+    <div class="import-card">
+      <h3>BULK IMPORT</h3>
+      <p>One order per line: <strong style="color:var(--text)">DATE, START, END, CASES</strong><br>
+        Example: <strong style="color:var(--accent)">01/27/26, 0800, 0842, 47</strong><br>
+        Date formats: MM/DD/YY or MM/DD/YYYY</p>
+      <label class="import-lbl">Orders (one per line)</label>
+      <textarea id="importText" rows="6" placeholder="01/27/26, 0800, 0842, 47"></textarea>
+      <label class="import-lbl">Hours per day — optional (DATE, HOURS)</label>
+      <textarea id="importHours" rows="3" placeholder="01/27/26, 8.5"></textarea>
+      <button class="btn-action" id="importBtn">IMPORT DATA</button>
+    </div>
+    <div class="import-card" style="border-color:var(--accent)">
+      <h3>SYNC DEVICES</h3>
+      <p>Copy your Device ID on one device and paste it on another to share data.</p>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Your Device ID</div>
+        <div id="syncCodeDisplay" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);word-break:break-all;line-height:1.5">loading...</div>
+        <button id="copyDeviceIdBtn" style="margin-top:10px;width:100%;background:rgba(0,212,255,0.1);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;padding:8px;cursor:pointer">COPY DEVICE ID</button>
+      </div>
+      <label class="import-lbl">Paste Device ID from another device</label>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input type="text" id="syncCodeInput" placeholder="Paste ID here" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:10px 12px;outline:none">
+        <button id="applySyncBtn" style="background:var(--accent);border:none;border-radius:10px;color:var(--bg);font-family:'Bebas Neue',sans-serif;font-size:16px;padding:10px 16px;cursor:pointer">APPLY</button>
+      </div>
+      <p style="margin-top:8px;color:var(--warn);font-size:10px">Applying will switch this device to use the other device's data.</p>
+    </div>
+    <div class="import-card">
+      <h3 style="color:var(--muted)">EXPORT DATA</h3>
+      <p>Download all your data as a backup file.</p>
+      <button class="btn-action muted" id="exportBtn">EXPORT TO FILE</button>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+const FB_CONFIG = {
+  apiKey: "AIzaSyDGsFtADLbS4b1sL9hxHbMcPBSJRM-tpNU",
+  authDomain: "pickrate572231.firebaseapp.com",
+  databaseURL: "https://pickrate572231-default-rtdb.firebaseio.com",
+  projectId: "pickrate572231",
+  storageBucket: "pickrate572231.firebasestorage.app",
+  messagingSenderId: "405339759544",
+  appId: "1:405339759544:web:072486edbefbe182e3654d"
+};
+const TARGET = 160;
+
+// ─── STATE ─────────────────────────────────────────────────────────────────
+let appData = { days: {} };  // Firebase data
+let activeKey = '';          // YYYY-MM-DD — single source of truth for current date
+let editingId = null;
+let weekOffset = 0;
+let dataRef = null;
+let saveTimer = null;
+let currentTab = 'log';
+
+// ─── DATE UTILITIES ────────────────────────────────────────────────────────
+// Build YYYY-MM-DD from local date parts only — never use UTC
+function dateToKey(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
+function todayKey() {
+  return dateToKey(new Date());
+}
+
+// Parse YYYY-MM-DD key back to a local Date object
+function keyToDate(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+// Human-readable label from a YYYY-MM-DD key
+function keyToLabel(key) {
+  return keyToDate(key).toLocaleDateString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+  });
+}
+
+// Parse import date strings MM/DD/YY or MM/DD/YYYY → YYYY-MM-DD
+function parseImportDate(str) {
+  str = str.trim();
+  const parts = str.split('/');
+  if (parts.length !== 3) return null;
+  let [m, d, y] = parts;
+  if (y.length === 2) y = '20' + y;
+  const dt = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+  if (isNaN(dt.getTime())) return null;
+  return dateToKey(dt);
+}
+
+// Shift a YYYY-MM-DD key by N days
+function shiftKey(key, days) {
+  const d = keyToDate(key);
+  d.setDate(d.getDate() + days);
+  return dateToKey(d);
+}
+
+// ─── ACTIVE DATE ───────────────────────────────────────────────────────────
+function setActiveDate(key) {
+  if (!key) return;
+  activeKey = key;
+  // Update display
+  const label = keyToLabel(key);
+  document.getElementById('dateDisplay').textContent = label;
+  document.getElementById('orderListDateLabel').textContent = label;
+  document.getElementById('datePickerInput').value = key;
+  // Keep move-date pre-filled
+  document.getElementById('moveToDate').value = key;
+}
+
+// ─── DAY DATA HELPERS ──────────────────────────────────────────────────────
+function getDay(key) {
+  if (!appData.days) appData.days = {};
+  if (!appData.days[key]) appData.days[key] = { orders: [], hours: null, breaks: 2 };
+  const d = appData.days[key];
+  if (!Array.isArray(d.orders)) d.orders = [];
+  if (d.breaks === undefined || d.breaks === null) d.breaks = 2;
+  return d;
+}
+
+// ─── MATH ──────────────────────────────────────────────────────────────────
+function toMin(hhmm) {
+  const n = parseInt(hhmm);
+  if (isNaN(n) || n < 0) return null;
+  return Math.floor(n / 100) * 60 + (n % 100);
+}
+
+function calcDuration(s, e) {
+  const sm = toMin(s), em = toMin(e);
+  if (sm === null || em === null) return null;
+  return em - sm;
+}
+
+function calcOrder(s, e, c) {
+  const dur = calcDuration(s, e);
+  const cases = parseInt(c);
+  if (!dur || dur <= 0 || !cases || cases <= 0) return null;
+  return {
+    duration: parseFloat(dur.toFixed(2)),
+    cases,
+    uph: parseFloat(((cases / dur) * 60).toFixed(1))
+  };
+}
+
+function effectiveHours(raw, breaks) {
+  return parseFloat(raw) - (breaks * 15 / 60);
+}
+
+function fmtTime(hhmm) {
+  const s = String(Math.round(hhmm)).padStart(4, '0');
+  return s.slice(0, 2) + ':' + s.slice(2);
+}
+
+// ─── FIREBASE ──────────────────────────────────────────────────────────────
+function getUserId() {
+  let id = localStorage.getItem('pickrate_uid');
+  if (!id) {
+    id = 'user_' + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem('pickrate_uid', id);
+  }
+  return id;
+}
+
+function setSyncStatus(status) {
+  document.getElementById('syncDot').className = 'sync-dot ' + status;
+  document.getElementById('syncLabel').textContent =
+    status === 'synced' ? 'SYNCED' :
+    status === 'syncing' ? 'SAVING' :
+    status === 'error' ? 'ERROR' : 'SYNC';
+}
+
+function saveData() {
+  setSyncStatus('syncing');
+  localStorage.setItem('pickrate_v3', JSON.stringify(appData));
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    if (!dataRef) { setSyncStatus('error'); return; }
+    set(dataRef, appData)
+      .then(() => setSyncStatus('synced'))
+      .catch(() => { setSyncStatus('error'); toast('Save failed — check connection'); });
+  }, 800);
+}
+
+function initFirebase() {
+  try {
+    const app = initializeApp(FB_CONFIG);
+    const db = getDatabase(app);
+    const uid = getUserId();
+    dataRef = ref(db, 'users/' + uid);
+    document.getElementById('loadingMsg').textContent = 'Loading your data...';
+
+    onValue(dataRef, (snapshot) => {
+      const data = snapshot.val();
+      appData = data || { days: {} };
+      if (!appData.days) appData.days = {};
+
+      const loading = document.getElementById('loadingScreen');
+      if (loading.style.display !== 'none') {
+        loading.style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        // Show device ID
+        document.getElementById('syncCodeDisplay').textContent = uid;
+        // Set today as active date and render
+        setActiveDate(todayKey());
+        renderAll();
+      } else {
+        // Subsequent Firebase sync — re-render but don't reset the active date
+        renderAll();
+      }
+      setSyncStatus('synced');
+    }, (err) => {
+      console.error('Firebase error:', err);
+      setSyncStatus('error');
+      try { appData = JSON.parse(localStorage.getItem('pickrate_v3')) || { days: {} }; }
+      catch { appData = { days: {} }; }
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      document.getElementById('syncCodeDisplay').textContent = uid;
+      setActiveDate(todayKey());
+      renderAll();
+      toast('Offline — using local data');
+    });
+  } catch (e) {
+    console.error(e);
+    document.getElementById('loadingMsg').textContent = 'Firebase config error';
+    setSyncStatus('error');
+  }
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ─── RENDER: HEADER ───────────────────────────────────────────────────────
+function renderHeader() {
+  const day = getDay(activeKey);
+  const orders = day.orders;
+  const totalCases = orders.reduce((s, o) => s + (Number(o.cases) || 0), 0);
+  const rateEl = document.getElementById('liveRate');
+  const fillEl = document.getElementById('progressFill');
+
+  const rawH = day.hours ? parseFloat(day.hours) : null;
+  const effH = rawH ? effectiveHours(rawH, day.breaks) : null;
+
+  let uph = null;
+  if (effH && effH > 0 && totalCases > 0) {
+    uph = totalCases / effH;
+  } else if (orders.length > 0) {
+    uph = orders.reduce((s, o) => s + o.uph, 0) / orders.length;
+  }
+
+  if (uph !== null) {
+    rateEl.textContent = uph.toFixed(1);
+    const pct = Math.min((uph / TARGET) * 100, 110);
+    fillEl.style.width = pct + '%';
+    const c = uph >= TARGET ? 'var(--accent2)' : uph >= TARGET * 0.85 ? 'var(--accent)' : 'var(--warn)';
+    fillEl.style.background = c;
+    rateEl.style.color = c;
+  } else {
+    rateEl.textContent = '—';
+    rateEl.style.color = 'var(--text)';
+    fillEl.style.width = '0%';
+  }
+}
+
+// ─── RENDER: FORM ─────────────────────────────────────────────────────────
+function updateFormCalc() {
+  const s = document.getElementById('startTime').value;
+  const e = document.getElementById('endTime').value;
+  const c = document.getElementById('cases').value;
+  const dur = calcDuration(s, e);
+  const durEl = document.getElementById('durationDisplay');
+  const logBtn = document.getElementById('logBtn');
+
+  if (dur !== null && dur > 0) {
+    durEl.textContent = dur.toFixed(1) + ' min';
+    durEl.classList.add('has-value');
+  } else {
+    durEl.textContent = '—';
+    durEl.classList.remove('has-value');
+  }
+
+  const ready = dur !== null && dur > 0 && c && parseInt(c) > 0;
+  logBtn.classList.toggle('dimmed', !ready);
+}
+
+function clearForm() {
+  document.getElementById('startTime').value = '';
+  document.getElementById('endTime').value = '';
+  document.getElementById('cases').value = '';
+  document.getElementById('durationDisplay').textContent = '—';
+  document.getElementById('durationDisplay').classList.remove('has-value');
+  document.getElementById('logBtn').classList.add('dimmed');
+}
+
+function doLogOrder() {
+  const s = document.getElementById('startTime').value;
+  const e = document.getElementById('endTime').value;
+  const c = document.getElementById('cases').value;
+  const calc = calcOrder(s, e, c);
+  if (!calc) { toast('Check start time, end time, and cases'); return; }
+
+  const day = getDay(activeKey);
+
+  if (editingId !== null) {
+    const idx = day.orders.findIndex(o => o.id === editingId);
+    if (idx !== -1) {
+      day.orders[idx] = { ...day.orders[idx], start: s, end: e, ...calc };
+    }
+    editingId = null;
+    document.getElementById('formTitle').textContent = 'NEW ORDER';
+    document.getElementById('logBtn').textContent = 'LOG ORDER';
+    document.getElementById('logBtn').classList.remove('edit-mode');
+    document.getElementById('cancelBtn').style.display = 'none';
+    clearForm();
+    toast('Order updated');
+  } else {
+    day.orders.push({ id: Date.now() + Math.random(), start: s, end: e, ...calc });
+    const nextStart = e;
+    clearForm();
+    setTimeout(() => {
+      document.getElementById('startTime').value = nextStart;
+      document.getElementById('endTime').focus();
+    }, 80);
+    toast('Logged — ' + calc.uph + ' u/hr');
+  }
+
+  saveData();
+  renderOrderList();
+  renderHeader();
+}
+
+function doEditOrder(id) {
+  const day = getDay(activeKey);
+  const order = day.orders.find(o => o.id === id);
+  if (!order) return;
+  editingId = id;
+  document.getElementById('startTime').value = order.start;
+  document.getElementById('endTime').value = order.end;
+  document.getElementById('cases').value = order.cases;
+  updateFormCalc();
+  document.getElementById('formTitle').textContent = 'EDIT ORDER';
+  const logBtn = document.getElementById('logBtn');
+  logBtn.textContent = 'SAVE CHANGES';
+  logBtn.classList.add('edit-mode');
+  logBtn.classList.remove('dimmed');
+  document.getElementById('cancelBtn').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  renderOrderList();
+}
+
+function doCancelEdit() {
+  editingId = null;
+  document.getElementById('formTitle').textContent = 'NEW ORDER';
+  document.getElementById('logBtn').textContent = 'LOG ORDER';
+  document.getElementById('logBtn').classList.remove('edit-mode');
+  document.getElementById('cancelBtn').style.display = 'none';
+  clearForm();
+  renderOrderList();
+}
+
+function doDeleteOrder(id) {
+  const day = getDay(activeKey);
+  day.orders = day.orders.filter(o => o.id !== id);
+  if (editingId === id) doCancelEdit();
+  saveData();
+  renderOrderList();
+  renderHeader();
+  toast('Order removed');
+}
+
+// ─── RENDER: ORDER LIST ───────────────────────────────────────────────────
+function renderOrderList() {
+  const day = getDay(activeKey);
+  const orders = day.orders;
+  const el = document.getElementById('orderList');
+  el.innerHTML = '';
+
+  if (!orders.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><p>No orders for this date.<br>Use the form above or the Import tab.</p></div>';
+    return;
+  }
+
+  orders.forEach((o, i) => {
+    const item = document.createElement('div');
+    item.className = 'order-item' + (o.id === editingId ? ' editing' : '');
+
+    const onTrack = o.uph >= TARGET;
+    item.innerHTML =
+      '<div class="order-num">' + (i + 1) + '</div>' +
+      '<div class="order-details">' +
+        '<div class="order-times">' + fmtTime(o.start) + ' &rarr; ' + fmtTime(o.end) + '</div>' +
+        '<div class="order-meta">' + o.duration + ' min &middot; ' + o.cases + ' cases</div>' +
+      '</div>' +
+      '<div class="order-rate">' +
+        '<div class="rv ' + (onTrack ? 'on-track' : 'off-track') + '">' + o.uph + '</div>' +
+        '<div class="rl">u/hr</div>' +
+      '</div>' +
+      '<div class="order-actions">' +
+        '<button class="icon-btn edit-btn">✏️</button>' +
+        '<button class="icon-btn del-btn">✕</button>' +
+      '</div>';
+
+    item.querySelector('.edit-btn').addEventListener('click', () => doEditOrder(o.id));
+    item.querySelector('.del-btn').addEventListener('click', () => doDeleteOrder(o.id));
+    el.appendChild(item);
+  });
+}
+
+// ─── RENDER: SUMMARY ──────────────────────────────────────────────────────
+function renderSummary() {
+  const day = getDay(activeKey);
+  const orders = day.orders;
+  const totalCases = orders.reduce((s, o) => s + (Number(o.cases) || 0), 0);
+  const best = orders.length ? Math.max(...orders.map(o => o.uph)) : null;
+  const rawH = day.hours ? parseFloat(day.hours) : null;
+  const effH = rawH ? effectiveHours(rawH, day.breaks) : null;
+  const overall = effH && effH > 0 && totalCases > 0 ? totalCases / effH : null;
+
+  // Sync hours input
+  document.getElementById('hoursWorked').value = rawH || '';
+
+  // Break buttons
+  [0, 1, 2].forEach(n => {
+    document.getElementById('break' + n).classList.toggle('active', n === day.breaks);
+  });
+
+  document.getElementById('statOrders').textContent = orders.length;
+  document.getElementById('statCases').textContent = totalCases;
+  document.getElementById('statAvg').textContent = orders.length ? (totalCases / orders.length).toFixed(1) : '—';
+  document.getElementById('statBest').textContent = best !== null ? best.toFixed(1) : '—';
+
+  const ovEl = document.getElementById('statOverall');
+  const ocEl = document.getElementById('overallCard');
+  const osEl = document.getElementById('statOverallSub');
+  const ehEl = document.getElementById('statEffHours');
+
+  if (overall !== null) {
+    ovEl.textContent = overall.toFixed(1);
+    ocEl.className = 'stat-card full ' + (overall >= TARGET ? 'on-target' : 'below');
+    osEl.textContent = 'units per hour';
+    const breakLabel = day.breaks === 0 ? 'no breaks' : day.breaks === 1 ? 'minus 1 break (15 min)' : 'minus 2 breaks (30 min)';
+    ehEl.textContent = effH.toFixed(2) + ' effective hrs — ' + breakLabel;
+  } else {
+    ovEl.textContent = '—';
+    ocEl.className = 'stat-card full';
+    osEl.textContent = 'Enter hours worked above';
+    ehEl.textContent = '';
+  }
+
+  // Verdict
+  const vb = document.getElementById('verdictBanner');
+  if (overall !== null) {
+    const good = overall >= TARGET;
+    const diff = Math.abs(overall - TARGET).toFixed(1);
+    vb.innerHTML =
+      '<div class="verdict ' + (good ? 'good' : 'bad') + '">' +
+        '<div class="verdict-icon">' + (good ? '🏆' : '📊') + '</div>' +
+        '<div class="verdict-text">' + (good ? 'ON TARGET' : 'BELOW TARGET') + '</div>' +
+        '<div class="verdict-sub">' + (good ? diff + ' u/hr above target' : 'Need ' + diff + ' more u/hr to hit 160') + '</div>' +
+      '</div>';
+  } else {
+    vb.innerHTML = '';
+  }
+
+  renderCharts(orders);
+}
+
+// ─── RENDER: CHARTS ───────────────────────────────────────────────────────
+function renderCharts(orders) {
+  drawBar(orders);
+  drawLine(orders);
+}
+
+function drawBar(orders) {
+  const cv = document.getElementById('barChart');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.parentElement.clientWidth, h = 110;
+  cv.width = w * dpr; cv.height = h * dpr;
+  cv.style.width = w + 'px'; cv.style.height = h + 'px';
+  ctx.scale(dpr, dpr); ctx.clearRect(0, 0, w, h);
+  if (!orders.length) { ctx.fillStyle = '#5a6a82'; ctx.font = '12px DM Mono,monospace'; ctx.textAlign = 'center'; ctx.fillText('No orders yet', w / 2, h / 2); return; }
+  const pad = { t: 10, b: 22, l: 6, r: 6 };
+  const cw = w - pad.l - pad.r, ch = h - pad.t - pad.b;
+  const maxC = Math.max(...orders.map(o => o.cases), 1);
+  const bw = Math.max(4, (cw / orders.length) - 3);
+  orders.forEach((o, i) => {
+    const bh = (o.cases / maxC) * ch;
+    const x = pad.l + i * (cw / orders.length);
+    const y = pad.t + ch - bh;
+    ctx.fillStyle = o.uph >= TARGET ? 'rgba(0,255,136,0.75)' : 'rgba(255,107,53,0.75)';
+    ctx.beginPath(); ctx.roundRect(x + 1, y, bw, bh, [3, 3, 0, 0]); ctx.fill();
+    ctx.fillStyle = '#5a6a82'; ctx.font = Math.min(10, bw) + 'px DM Mono,monospace'; ctx.textAlign = 'center';
+    ctx.fillText(i + 1, x + bw / 2 + 1, h - 6);
+    if (bw > 18) { ctx.fillStyle = '#e8edf5'; ctx.font = '9px DM Mono,monospace'; ctx.fillText(o.cases, x + bw / 2 + 1, y - 3); }
+  });
+}
+
+function drawLine(orders) {
+  const cv = document.getElementById('lineChart');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.parentElement.clientWidth, h = 110;
+  cv.width = w * dpr; cv.height = h * dpr;
+  cv.style.width = w + 'px'; cv.style.height = h + 'px';
+  ctx.scale(dpr, dpr); ctx.clearRect(0, 0, w, h);
+  if (!orders.length) { ctx.fillStyle = '#5a6a82'; ctx.font = '12px DM Mono,monospace'; ctx.textAlign = 'center'; ctx.fillText('No orders yet', w / 2, h / 2); return; }
+  const pad = { t: 10, b: 18, l: 6, r: 6 };
+  const cw = w - pad.l - pad.r, ch = h - pad.t - pad.b;
+  let running = 0;
+  const pts = orders.map((o, i) => { running += o.cases; return { x: pad.l + (i / Math.max(orders.length - 1, 1)) * cw, val: running }; });
+  if (orders.length === 1) pts[0].x = pad.l + cw / 2;
+  const maxV = pts[pts.length - 1].val;
+  pts.forEach(p => p.y = pad.t + ch - (p.val / maxV) * ch);
+  const grad = ctx.createLinearGradient(0, pad.t, 0, h);
+  grad.addColorStop(0, 'rgba(0,255,136,0.3)'); grad.addColorStop(1, 'rgba(0,255,136,0)');
+  ctx.beginPath(); ctx.moveTo(pts[0].x, h - pad.b);
+  pts.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.lineTo(pts[pts.length - 1].x, h - pad.b); ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) { const cx = (pts[i - 1].x + pts[i].x) / 2; ctx.bezierCurveTo(cx, pts[i - 1].y, cx, pts[i].y, pts[i].x, pts[i].y); }
+  ctx.strokeStyle = 'rgba(0,255,136,0.9)'; ctx.lineWidth = 2; ctx.stroke();
+  pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fillStyle = '#00ff88'; ctx.fill(); });
+  const last = pts[pts.length - 1];
+  ctx.fillStyle = '#00ff88'; ctx.font = 'bold 11px DM Mono,monospace';
+  ctx.textAlign = last.x > w * 0.8 ? 'right' : 'left'; ctx.fillText(maxV + ' cases', last.x, last.y - 8);
+  if (orders.length <= 15) pts.forEach((p, i) => { ctx.fillStyle = '#5a6a82'; ctx.font = '9px DM Mono,monospace'; ctx.textAlign = 'center'; ctx.fillText(i + 1, p.x, h - 4); });
+}
+
+// ─── RENDER: WEEK ─────────────────────────────────────────────────────────
+function renderWeek() {
+  const el = document.getElementById('weekView');
+  el.innerHTML = '';
+
+  // Build Mon-Sun for current week offset using local date math
+  const today = new Date();
+  const dow = today.getDay(); // 0=Sun
+  const daysFromMon = dow === 0 ? 6 : dow - 1;
+  const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysFromMon + weekOffset * 7);
+
+  const weekDates = [];
+  for (let i = 0; i < 7; i++) {
+    weekDates.push(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i));
+  }
+
+  const startLabel = weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const endLabel = weekDates[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  document.getElementById('weekNavLabel').textContent = startLabel + ' - ' + endLabel;
+
+  const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+  const todayStr = todayKey();
+  let wCases = 0, wHours = 0;
+
+  weekDates.forEach((d, i) => {
+    const key = dateToKey(d);
+    const dayData = appData.days && appData.days[key]
+      ? appData.days[key]
+      : { orders: [], hours: null, breaks: 2 };
+    const orders = Array.isArray(dayData.orders) ? dayData.orders : [];
+    const cases = orders.reduce((s, o) => s + (Number(o.cases) || 0), 0);
+    const breaks = (dayData.breaks !== undefined && dayData.breaks !== null) ? dayData.breaks : 2;
+    const rawH = dayData.hours ? parseFloat(dayData.hours) : null;
+    const effH = rawH ? effectiveHours(rawH, breaks) : null;
+    const uph = (effH && effH > 0 && cases > 0) ? cases / effH : null;
+    const isToday = key === todayStr;
+
+    wCases += cases;
+    if (rawH) wHours += rawH;
+
+    const pct = uph ? Math.min((uph / TARGET) * 100, 100) : 0;
+    const color = !uph ? '#1f2d45'
+      : uph >= TARGET ? 'var(--accent2)'
+      : uph >= TARGET * 0.85 ? 'var(--accent)'
+      : 'var(--warn)';
+
+    const row = document.createElement('div');
+    row.className = 'week-day';
+    if (isToday) row.style.borderColor = 'var(--accent)';
+    row.addEventListener('click', () => { setActiveDate(key); switchTab('log'); });
+
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'week-day-name';
+    nameDiv.style.color = isToday ? 'var(--accent)' : 'var(--muted)';
+    nameDiv.innerHTML = dayNames[i] + '<br><span style="font-size:10px">' + d.getDate() + '</span>';
+
+    const barWrap = document.createElement('div');
+    barWrap.className = 'week-bar-wrap';
+
+    const track = document.createElement('div');
+    track.className = 'week-bar-track';
+    const fill = document.createElement('div');
+    fill.className = 'week-bar-fill';
+    fill.style.cssText = 'width:' + pct + '%;background:' + color;
+    track.appendChild(fill);
+
+    const meta = document.createElement('div');
+    meta.className = 'week-meta';
+    meta.textContent = (cases ? cases + ' cases' : '\u2014') + (rawH ? ' \u00b7 ' + rawH + 'h' : '');
+
+    barWrap.appendChild(track);
+    barWrap.appendChild(meta);
+
+    const rateDiv = document.createElement('div');
+    rateDiv.className = 'week-rate';
+    rateDiv.style.color = color;
+    rateDiv.textContent = uph ? Math.round(uph).toString() : '\u2014';
+
+    row.appendChild(nameDiv);
+    row.appendChild(barWrap);
+    row.appendChild(rateDiv);
+    el.appendChild(row);
+  });
+
+  // Week total
+  const wUph = wHours > 0 && wCases > 0 ? wCases / wHours : null;
+  const wColor = wUph && wUph >= TARGET ? 'var(--accent2)' : wUph ? 'var(--warn)' : 'var(--muted)';
+  const card = document.createElement('div');
+  card.className = 'stat-card';
+  card.style.marginTop = '14px';
+  card.innerHTML =
+    '<div class="stat-label">WEEK TOTAL</div>' +
+    '<div style="display:flex;align-items:baseline;gap:8px;margin-top:4px">' +
+      '<div class="stat-val" style="color:' + wColor + '">' + (wUph ? wUph.toFixed(1) : '\u2014') + '</div>' +
+      '<span style="font-family:\'DM Mono\',monospace;font-size:12px;color:var(--muted)">u/hr avg</span>' +
+    '</div>' +
+    '<div class="stat-sub">' + wCases + ' total cases \u00b7 ' + wHours.toFixed(1) + ' hrs worked</div>';
+  el.appendChild(card);
+}
+
+// ─── RENDER: HISTORY ──────────────────────────────────────────────────────
+function renderHistory() {
+  const el = document.getElementById('historyView');
+  el.innerHTML = '';
+  const keys = Object.keys(appData.days || {})
+    .filter(k => {
+      const d = appData.days[k];
+      return d && Array.isArray(d.orders) && d.orders.length > 0;
+    })
+    .sort().reverse();
+
+  if (!keys.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>No history yet.<br>Start logging or use the Import tab!</p></div>';
+    return;
+  }
+
+  keys.forEach(key => {
+    const day = appData.days[key];
+    const orders = Array.isArray(day.orders) ? day.orders : [];
+    const cases = orders.reduce((s, o) => s + (Number(o.cases) || 0), 0);
+    const breaks = day.breaks !== undefined ? day.breaks : 2;
+    const rawH = day.hours ? parseFloat(day.hours) : null;
+    const effH = rawH ? effectiveHours(rawH, breaks) : null;
+    const uph = effH && effH > 0 && cases > 0 ? (cases / effH).toFixed(1) : null;
+    const color = uph !== null && parseFloat(uph) >= TARGET ? 'var(--accent2)'
+      : uph !== null ? 'var(--warn)' : 'var(--muted)';
+
+    const item = document.createElement('div');
+    item.className = 'hist-item';
+    item.innerHTML =
+      '<div style="flex:1">' +
+        '<div class="hist-date">' + keyToLabel(key) + '</div>' +
+        '<div class="hist-meta">' + orders.length + ' orders \u00b7 ' + cases + ' cases' + (rawH ? ' \u00b7 ' + rawH + 'h' : '') + '</div>' +
+      '</div>' +
+      '<div class="hist-rate" style="color:' + color + '">' + (uph || '\u2014') + '</div>';
+    item.addEventListener('click', () => { setActiveDate(key); switchTab('log'); });
+    el.appendChild(item);
+  });
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  const tabs = ['log', 'summary', 'week', 'history', 'import'];
+  tabs.forEach(t => {
+    document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'summary') renderSummary();
+  if (tab === 'week') renderWeek();
+  if (tab === 'history') renderHistory();
+}
+
+// ─── RENDER ALL ───────────────────────────────────────────────────────────
+function renderAll() {
+  setActiveDate(activeKey || todayKey()); // refresh display labels
+  renderOrderList();
+  renderHeader();
+  if (currentTab === 'summary') renderSummary();
+  if (currentTab === 'week') renderWeek();
+  if (currentTab === 'history') renderHistory();
+}
+
+// ─── IMPORT / EXPORT ──────────────────────────────────────────────────────
+function doImport() {
+  const orderLines = document.getElementById('importText').value.trim().split('\n');
+  const hourLines = document.getElementById('importHours').value.trim().split('\n');
+  let imported = 0, skipped = 0;
+
+  hourLines.forEach(line => {
+    line = line.trim();
+    if (!line) return;
+    const parts = line.split(',').map(s => s.trim());
+    if (parts.length < 2) return;
+    const key = parseImportDate(parts[0]);
+    const hours = parseFloat(parts[1]);
+    if (!key || isNaN(hours)) return;
+    getDay(key).hours = hours;
+  });
+
+  orderLines.forEach(line => {
+    line = line.trim();
+    if (!line) return;
+    const parts = line.split(',').map(s => s.trim());
+    if (parts.length < 4) { skipped++; return; }
+    const [ds, ss, es, cs] = parts;
+    const key = parseImportDate(ds);
+    const calc = calcOrder(ss, es, parseInt(cs));
+    if (!key || !calc) { skipped++; return; }
+    getDay(key).orders.push({ id: Date.now() + Math.random(), start: ss, end: es, ...calc });
+    imported++;
+  });
+
+  // Sort orders by start time
+  Object.values(appData.days).forEach(d => {
+    if (Array.isArray(d.orders)) {
+      d.orders.sort((a, b) => (toMin(a.start) || 0) - (toMin(b.start) || 0));
+    }
+  });
+
+  saveData();
+  renderAll();
+  document.getElementById('importText').value = '';
+  document.getElementById('importHours').value = '';
+  toast('Imported ' + imported + ' orders' + (skipped ? ' (' + skipped + ' skipped)' : ''));
+  if (imported > 0) switchTab('history');
+}
+
+function doExport() {
+  const keys = Object.keys(appData.days || {}).sort();
+  let out = 'DATE,START,END,CASES,DURATION_MIN,U_PER_HR\n';
+  keys.forEach(key => {
+    const day = appData.days[key];
+    if (!Array.isArray(day.orders)) return;
+    const [y, m, d] = key.split('-');
+    const ds = m + '/' + d + '/' + y.slice(2);
+    day.orders.forEach(o => {
+      out += ds + ',' + o.start + ',' + o.end + ',' + o.cases + ',' + o.duration + ',' + o.uph + '\n';
+    });
+  });
+  const blob = new Blob([out], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'pickrate_export.txt'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Export downloaded');
+}
+
+function doMoveDate() {
+  const fromKey = activeKey;
+  const toKey = document.getElementById('moveToDate').value;
+  if (!toKey || toKey === fromKey) { toast('Pick a different target date'); return; }
+  if (!appData.days[fromKey]) { toast('No data to move'); return; }
+
+  const existing = appData.days[toKey];
+  if (existing && Array.isArray(existing.orders) && existing.orders.length > 0) {
+    if (!confirm('Target date already has orders. Merge them?')) return;
+    appData.days[toKey].orders = [...(appData.days[toKey].orders || []), ...appData.days[fromKey].orders];
+  } else {
+    appData.days[toKey] = JSON.parse(JSON.stringify(appData.days[fromKey]));
+  }
+  delete appData.days[fromKey];
+  document.getElementById('moveDateBanner').style.display = 'none';
+  saveData();
+  setActiveDate(toKey);
+  renderAll();
+  toast('Moved ' + fromKey + ' to ' + toKey);
+}
+
+// ─── WIRE UP ALL EVENTS ───────────────────────────────────────────────────
+function wireEvents() {
+  // Form inputs
+  document.getElementById('startTime').addEventListener('input', updateFormCalc);
+  document.getElementById('endTime').addEventListener('input', updateFormCalc);
+  document.getElementById('cases').addEventListener('input', updateFormCalc);
+
+  // Log button — NOT disabled, just styled dimmed; we validate inside doLogOrder
+  document.getElementById('logBtn').addEventListener('click', doLogOrder);
+  document.getElementById('cancelBtn').addEventListener('click', doCancelEdit);
+
+  // Date navigation
+  document.getElementById('prevDayBtn').addEventListener('click', () => {
+    setActiveDate(shiftKey(activeKey, -1));
+    renderAll();
+  });
+  document.getElementById('nextDayBtn').addEventListener('click', () => {
+    setActiveDate(shiftKey(activeKey, 1));
+    renderAll();
+  });
+  document.getElementById('todayBtn').addEventListener('click', () => {
+    setActiveDate(todayKey());
+    renderAll();
+  });
+
+  // Click the date display to open the hidden picker
+  document.getElementById('dateDisplay').addEventListener('click', () => {
+    document.getElementById('datePickerInput').showPicker
+      ? document.getElementById('datePickerInput').showPicker()
+      : document.getElementById('datePickerInput').click();
+  });
+  document.getElementById('datePickerInput').addEventListener('change', function() {
+    if (this.value) {
+      setActiveDate(this.value);
+      renderAll();
+    }
+  });
+
+  // Tabs
+  ['log', 'summary', 'week', 'history', 'import'].forEach(tab => {
+    document.getElementById('tab-btn-' + tab).addEventListener('click', () => switchTab(tab));
+  });
+
+  // Summary: hours + breaks
+  document.getElementById('hoursWorked').addEventListener('input', function() {
+    const h = parseFloat(this.value);
+    if (!isNaN(h) && h > 0) {
+      getDay(activeKey).hours = h;
+      saveData();
+      renderSummary();
+      renderHeader();
+    }
+  });
+  [0, 1, 2].forEach(n => {
+    document.getElementById('break' + n).addEventListener('click', () => {
+      getDay(activeKey).breaks = n;
+      saveData();
+      renderSummary();
+      renderHeader();
+    });
+  });
+
+  // Week nav
+  document.getElementById('prevWeekBtn').addEventListener('click', () => { weekOffset--; renderWeek(); });
+  document.getElementById('nextWeekBtn').addEventListener('click', () => { weekOffset++; renderWeek(); });
+
+  // Wrong date / move
+  document.getElementById('wrongDateBtn').addEventListener('click', () => {
+    const banner = document.getElementById('moveDateBanner');
+    banner.style.display = banner.style.display === 'none' ? 'block' : 'none';
+  });
+  document.getElementById('moveDateConfirm').addEventListener('click', doMoveDate);
+  document.getElementById('moveDateClose').addEventListener('click', () => {
+    document.getElementById('moveDateBanner').style.display = 'none';
+  });
+
+  // Import / export
+  document.getElementById('importBtn').addEventListener('click', doImport);
+  document.getElementById('exportBtn').addEventListener('click', doExport);
+
+  // Sync
+  document.getElementById('copyDeviceIdBtn').addEventListener('click', () => {
+    const uid = getUserId();
+    navigator.clipboard.writeText(uid).then(() => toast('Device ID copied!'))
+      .catch(() => { document.getElementById('syncCodeInput').value = uid; toast('ID pasted into field below'); });
+  });
+  document.getElementById('applySyncBtn').addEventListener('click', () => {
+    const input = document.getElementById('syncCodeInput').value.trim();
+    if (!input.startsWith('user_') || input.length < 10) { toast('Invalid Device ID'); return; }
+    if (!confirm('Switch to other device\'s data?')) return;
+    localStorage.setItem('pickrate_uid', input);
+    toast('Switching — reloading...');
+    setTimeout(() => location.reload(), 1000);
+  });
+
+  // Clear all
+  document.getElementById('clearAllBtn').addEventListener('click', () => {
+    if (!confirm('Clear ALL data from cloud? Cannot be undone.')) return;
+    appData = { days: {} };
+    if (dataRef) set(dataRef, appData);
+    saveData();
+    renderAll();
+    toast('All data cleared');
+  });
+}
+
+// ─── BOOT ─────────────────────────────────────────────────────────────────
+wireEvents();
+initFirebase();
+</script>
+</body>
+</html>
