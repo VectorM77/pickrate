@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pick Rate Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a; --surface: #111827; --surface2: #1a2235; --border: #1f2d45;
+    --accent: #00d4ff; --accent2: #00ff88; --warn: #ff6b35; --text: #e8edf5; --muted: #5a6a82;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
+  .app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 0 120px; }
+
+  /* Sync indicator */
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); display: inline-block; margin-left: 6px; transition: background 0.3s; flex-shrink: 0; }
+  .sync-dot.synced { background: var(--accent2); }
+  .sync-dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
+  .sync-dot.error { background: var(--warn); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* Header */
+  .header { padding: 16px 16px 10px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, #0d1525 0%, transparent 100%); position: sticky; top: 0; z-index: 10; backdrop-filter: blur(12px); }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: var(--accent); text-shadow: 0 0 20px rgba(0,212,255,0.4); }
+  .header-right { display: flex; align-items: center; gap: 6px; }
+  .sync-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); }
+  .rate-label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+  .rate-big { font-family: 'Bebas Neue', sans-serif; font-size: 38px; line-height: 1; transition: color 0.4s; }
+  .rate-unit { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-left: 4px; }
+  .target-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .progress-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1), background 0.4s; }
+
+  /* Date strip */
+  .date-strip { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 88px; z-index: 9; }
+  .date-strip label { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); white-space: nowrap; }
+  .date-strip input[type=date] { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; padding: 7px 10px; outline: none; -webkit-appearance: none; color-scheme: dark; }
+  .date-strip input[type=date]:focus { border-color: var(--accent); }
+  .btn-today { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--accent); font-family: 'DM Mono', monospace; font-size: 11px; padding: 7px 10px; cursor: pointer; white-space: nowrap; }
+
+  /* Tabs */
+  .tabs { display: flex; padding: 0 16px; gap: 4px; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 130px; z-index: 8; }
+  .tab { flex: 1; padding: 10px 2px; text-align: center; font-size: 10px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; text-transform: uppercase; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* Sections */
+  .section { display: none; padding: 14px 16px; }
+  .section.active { display: block; }
+
+  /* Form */
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
+  .form-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; color: var(--accent); margin-bottom: 12px; }
+  .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .cases-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .input-group { display: flex; flex-direction: column; gap: 5px; }
+  .input-group label { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .input-group input { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; padding: 9px 12px; width: 100%; outline: none; transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none; }
+  .input-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,212,255,0.1); }
+  .input-group input::placeholder { color: var(--border); }
+  .calc-display { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; color: var(--muted); min-height: 46px; display: flex; align-items: center; }
+  .calc-display.has-value { color: var(--accent2); }
+  .btn-log { width: 100%; padding: 13px; background: var(--accent); color: var(--bg); font-family: 'Bebas Neue', sans-serif; font-size: 19px; letter-spacing: 2px; border: none; border-radius: 12px; cursor: pointer; transition: transform 0.1s, box-shadow 0.2s; box-shadow: 0 4px 20px rgba(0,212,255,0.3); }
+  .btn-log:active { transform: scale(0.97); }
+  .btn-log:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-log.edit-mode { background: var(--accent2); box-shadow: 0 4px 20px rgba(0,255,136,0.3); }
+  .btn-cancel { width: 100%; padding: 11px; background: none; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 13px; cursor: pointer; margin-top: 8px; }
+
+  /* Hours / breaks */
+  .hours-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 11px 14px; margin-bottom: 14px; }
+  .hours-row label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
+  .hours-row input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 20px; padding: 5px 10px; width: 80px; text-align: center; outline: none; -webkit-appearance: none; }
+  .hours-row input:focus { border-color: var(--accent); }
+  .break-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 12px; padding: 6px 10px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .break-btn.active { background: rgba(0,212,255,0.12); border-color: var(--accent); color: var(--accent); }
+
+  /* Order list */
+  .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; }
+  .order-list { display: flex; flex-direction: column; gap: 8px; }
+  .order-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 11px 12px; display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+  .order-item.editing { border-color: var(--accent2); background: rgba(0,255,136,0.05); }
+  @keyframes slideIn { from { opacity:0; transform:translateY(8px) scale(0.97); } to { opacity:1; transform:none; } }
+  .order-num { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--muted); width: 24px; flex-shrink: 0; }
+  .order-details { flex: 1; min-width: 0; }
+  .order-times { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text); margin-bottom: 2px; }
+  .order-meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .order-rate { text-align: right; flex-shrink: 0; }
+  .order-rate .rv { font-family: 'Bebas Neue', sans-serif; font-size: 22px; line-height: 1; }
+  .order-rate .rl { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); }
+  .on-track { color: var(--accent2); } .off-track { color: var(--warn); }
+  .order-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+  .icon-btn { background: none; border: none; color: var(--muted); font-size: 14px; cursor: pointer; padding: 3px 6px; border-radius: 6px; line-height: 1; }
+  .icon-btn:active { background: rgba(255,255,255,0.08); }
+
+  /* Stats */
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+  .stat-card.full { grid-column: 1 / -1; }
+  .stat-label { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 4px; }
+  .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 34px; line-height: 1; }
+  .stat-sub { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .on-target .stat-val { color: var(--accent2); } .below .stat-val { color: var(--warn); }
+
+  /* Verdict */
+  .verdict { border-radius: 14px; padding: 12px 16px; text-align: center; margin-bottom: 14px; border: 1px solid; }
+  .verdict.good { background: rgba(0,255,136,0.08); border-color: rgba(0,255,136,0.3); color: var(--accent2); }
+  .verdict.bad { background: rgba(255,107,53,0.08); border-color: rgba(255,107,53,0.3); color: var(--warn); }
+  .verdict-icon { font-size: 22px; margin-bottom: 3px; }
+  .verdict-text { font-size: 14px; font-weight: 600; }
+  .verdict-sub { font-family: 'DM Mono', monospace; font-size: 11px; opacity: 0.7; margin-top: 2px; }
+
+  /* Charts */
+  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
+  .chart-title { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; }
+  .chart-area { height: 110px; }
+  canvas { width: 100% !important; }
+
+  /* Week */
+  .week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .week-nav-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--accent); font-size: 18px; padding: 6px 14px; cursor: pointer; }
+  .week-nav-label { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+  .week-day { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .week-day-name { font-family: 'Bebas Neue', sans-serif; font-size: 16px; width: 40px; flex-shrink: 0; color: var(--muted); }
+  .week-bar-wrap { flex: 1; }
+  .week-bar-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 3px; }
+  .week-bar-fill { height: 100%; border-radius: 3px; }
+  .week-meta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+  .week-rate { font-family: 'Bebas Neue', sans-serif; font-size: 24px; width: 48px; text-align: right; flex-shrink: 0; }
+
+  /* History */
+  .hist-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .hist-date { font-family: 'Bebas Neue', sans-serif; font-size: 17px; margin-bottom: 2px; }
+  .hist-meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .hist-rate { font-family: 'Bebas Neue', sans-serif; font-size: 26px; width: 52px; text-align: right; flex-shrink: 0; }
+
+  /* Import */
+  .import-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
+  .import-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; color: var(--accent); margin-bottom: 6px; }
+  .import-card p { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
+  .import-lbl { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px; margin-top: 10px; }
+  textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; padding: 10px 12px; outline: none; resize: vertical; color-scheme: dark; }
+  textarea:focus { border-color: var(--accent); }
+  .btn-action { width: 100%; padding: 12px; background: var(--surface2); border: 1px solid var(--accent); border-radius: 10px; color: var(--accent); font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; cursor: pointer; margin-top: 10px; }
+  .btn-action.muted { border-color: var(--border); color: var(--muted); }
+
+  /* Misc */
+  .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); }
+  .empty-icon { font-size: 40px; margin-bottom: 10px; opacity: 0.4; }
+  .empty-state p { font-family: 'DM Mono', monospace; font-size: 12px; line-height: 1.6; }
+  .clear-btn { width: 100%; padding: 11px; background: none; border: 1px solid var(--border); border-radius: 10px; color: var(--warn); font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; margin-top: 14px; }
+  .toast { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 9px 18px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; z-index: 100; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Loading screen */
+  .loading-screen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; gap: 16px; }
+  .loading-screen .logo-big { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 4px; color: var(--accent); text-shadow: 0 0 30px rgba(0,212,255,0.5); }
+  .loading-bar { width: 120px; height: 3px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .loading-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; animation: loading 1.2s ease-in-out infinite; }
+  @keyframes loading { 0%{width:0%;margin-left:0} 50%{width:60%;margin-left:20%} 100%{width:0%;margin-left:100%} }
+  .loading-msg { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- Loading screen -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="logo-big">PICKRATE</div>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+  <div class="loading-msg" id="loadingMsg">Connecting to cloud...</div>
+</div>
+
+<div class="app" id="mainApp" style="display:none">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">PICKRATE</div>
+      <div class="header-right">
+        <span class="sync-label" id="syncLabel">SYNC</span>
+        <span class="sync-dot" id="syncDot"></span>
+      </div>
+    </div>
+    <div class="rate-label-row">
+      <div><span class="rate-big" id="liveRate">—</span><span class="rate-unit">u/hr</span></div>
+      <div class="target-label">TARGET: 160</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+
+  <!-- Date strip -->
+  <div class="date-strip">
+    <label>Viewing</label>
+    <input type="date" id="activeDate" onchange="onDateChange()">
+    <button class="btn-today" onclick="jumpToToday()">TODAY</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('log')">Log</div>
+    <div class="tab" onclick="switchTab('summary')">Summary</div>
+    <div class="tab" onclick="switchTab('week')">Week</div>
+    <div class="tab" onclick="switchTab('history')">History</div>
+    <div class="tab" onclick="switchTab('import')">Import</div>
+  </div>
+
+  <!-- LOG TAB -->
+  <div class="section active" id="tab-log">
+    <div class="form-card">
+      <h3 id="formTitle">NEW ORDER</h3>
+      <div class="time-row">
+        <div class="input-group">
+          <label>Start Time</label>
+          <input type="number" id="startTime" placeholder="0800" inputmode="numeric" oninput="onTimeInput()">
+        </div>
+        <div class="input-group">
+          <label>End Time</label>
+          <input type="number" id="endTime" placeholder="0845" inputmode="numeric" oninput="onTimeInput()">
+        </div>
+      </div>
+      <div class="cases-row">
+        <div class="input-group">
+          <label>Cases Picked</label>
+          <input type="number" id="cases" placeholder="0" inputmode="numeric" oninput="onTimeInput()">
+        </div>
+        <div class="input-group">
+          <label>Duration (min)</label>
+          <div class="calc-display" id="durationDisplay">—</div>
+        </div>
+      </div>
+      <button class="btn-log" id="logBtn" onclick="logOrder()" disabled>LOG ORDER</button>
+      <button class="btn-cancel" id="cancelBtn" onclick="cancelEdit()" style="display:none">CANCEL EDIT</button>
+    </div>
+    <div class="section-title">ORDERS — <span id="orderListDateLabel" style="color:var(--accent)"></span></div>
+    <div class="order-list" id="orderList"></div>
+  </div>
+
+  <!-- SUMMARY TAB -->
+  <div class="section" id="tab-summary">
+    <div class="hours-row">
+      <label>Hours Worked</label>
+      <input type="number" id="hoursWorked" placeholder="8.0" step="0.5" inputmode="decimal" oninput="updateSummary()">
+    </div>
+    <div class="hours-row" style="margin-top:-6px">
+      <label>Breaks Taken</label>
+      <div style="display:flex;gap:6px">
+        <button class="break-btn" id="break0" onclick="setBreaks(0)">None</button>
+        <button class="break-btn" id="break1" onclick="setBreaks(1)">1 × 15 min</button>
+        <button class="break-btn active" id="break2" onclick="setBreaks(2)">2 × 15 min</button>
+      </div>
+    </div>
+    <div id="verdictBanner"></div>
+    <div class="summary-grid">
+      <div class="stat-card"><div class="stat-label">Orders</div><div class="stat-val" id="statOrders">0</div></div>
+      <div class="stat-card"><div class="stat-label">Total Cases</div><div class="stat-val" id="statCases">0</div></div>
+      <div class="stat-card"><div class="stat-label">Avg / Order</div><div class="stat-val" id="statAvg">—</div></div>
+      <div class="stat-card"><div class="stat-label">Best Order</div><div class="stat-val" id="statBest">—</div><div class="stat-sub">u/hr</div></div>
+      <div class="stat-card full" id="overallCard">
+        <div class="stat-label">Overall Cases / Hour</div>
+        <div class="stat-val" id="statOverall">—</div>
+        <div class="stat-sub" id="statOverallSub">Enter hours worked above</div>
+        <div class="stat-sub" id="statEffHours" style="margin-top:3px;color:var(--muted)"></div>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">CASES PER ORDER</div>
+      <div class="chart-area"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">CUMULATIVE CASES</div>
+      <div class="chart-area"><canvas id="lineChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- WEEK TAB -->
+  <div class="section" id="tab-week">
+    <div class="week-nav">
+      <button class="week-nav-btn" onclick="shiftWeek(-1)">‹</button>
+      <div class="week-nav-label" id="weekNavLabel"></div>
+      <button class="week-nav-btn" onclick="shiftWeek(1)">›</button>
+    </div>
+    <div id="weekView"></div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div class="section" id="tab-history">
+    <div id="historyView"></div>
+    <button class="clear-btn" onclick="clearAll()">CLEAR ALL DATA</button>
+  </div>
+
+  <!-- IMPORT TAB -->
+  <div class="section" id="tab-import">
+    <div class="import-card">
+      <h3>BULK IMPORT</h3>
+      <p>Enter one order per line:<br>
+        <strong style="color:var(--text)">DATE, START, END, CASES</strong><br>
+        Example: <strong style="color:var(--accent)">01/27/26, 0800, 0842, 47</strong><br>
+        Date formats: MM/DD/YY or MM/DD/YYYY</p>
+      <label class="import-lbl">Orders (one per line)</label>
+      <textarea id="importText" rows="6" placeholder="01/27/26, 0800, 0842, 47&#10;01/27/26, 0845, 0920, 38&#10;01/28/26, 0730, 0810, 52"></textarea>
+      <label class="import-lbl">Hours worked per day — optional (DATE, HOURS)</label>
+      <textarea id="importHours" rows="3" placeholder="01/27/26, 8.5&#10;01/28/26, 9.0"></textarea>
+      <button class="btn-action" onclick="runImport()">IMPORT DATA</button>
+    </div>
+    <div class="import-card" style="border-color: var(--accent)">
+      <h3>SYNC DEVICES</h3>
+      <p>To sync your phone and laptop, copy your full Device ID from one device and paste it into the other.</p>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Your Device ID</div>
+        <div id="syncCodeDisplay" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);word-break:break-all;line-height:1.5">loading...</div>
+        <button onclick="copySyncCode()" style="margin-top:10px;width:100%;background:rgba(0,212,255,0.1);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;padding:8px;cursor:pointer">COPY DEVICE ID</button>
+      </div>
+      <label class="import-lbl">Paste Device ID from another device</label>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input type="text" id="syncCodeInput" placeholder="Paste ID here" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:10px 12px;outline:none;-webkit-appearance:none">
+        <button onclick="applySyncCode()" style="background:var(--accent);border:none;border-radius:10px;color:var(--bg);font-family:'Bebas Neue',sans-serif;font-size:16px;padding:10px 16px;cursor:pointer;white-space:nowrap">APPLY</button>
+      </div>
+      <p style="margin-top:8px;color:var(--warn);font-size:10px">⚠️ Applying will switch this device to use the other device's data.</p>
+    </div>
+    <div class="import-card">
+      <h3 style="color:var(--muted)">EXPORT DATA</h3>
+      <p>Download all your data as a backup file.</p>
+      <button class="btn-action muted" onclick="exportData()">EXPORT TO FILE</button>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, onValue, set, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+// ── PASTE YOUR FIREBASE CONFIG HERE ──────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyDGsFtADLbS4b1sL9hxHbMcPBSJRM-tpNU",
+  authDomain: "pickrate572231.firebaseapp.com",
+  databaseURL: "https://pickrate572231-default-rtdb.firebaseio.com",
+  projectId: "pickrate572231",
+  storageBucket: "pickrate572231.firebasestorage.app",
+  messagingSenderId: "405339759544",
+  appId: "1:405339759544:web:072486edbefbe182e3654d"
+};
+// ─────────────────────────────────────────────────────────────
+
+const TARGET = 160;
+let state = { days: {} };
+let editingId = null;
+let weekOffset = 0;
+let db, dataRef;
+let saveTimer = null;
+
+// ── User ID — persists in localStorage so same browser = same data
+function getUserId() {
+  let id = localStorage.getItem('pickrate_uid');
+  if (!id) { id = 'user_' + Math.random().toString(36).slice(2, 10); localStorage.setItem('pickrate_uid', id); }
+  return id;
+}
+
+// ── Sync status UI
+function setSyncStatus(status) {
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  dot.className = 'sync-dot ' + status;
+  lbl.textContent = status === 'synced' ? 'SYNCED' : status === 'syncing' ? 'SAVING' : status === 'error' ? 'ERROR' : 'SYNC';
+}
+
+// ── Init Firebase & listen for real-time updates
+function initFirebase() {
+  try {
+    const app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+    const uid = getUserId();
+    dataRef = ref(db, 'users/' + uid);
+
+    document.getElementById('loadingMsg').textContent = 'Loading your data...';
+
+    onValue(dataRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        state = data;
+      } else {
+        state = { days: {} };
+      }
+      // Show app on first load
+      if (document.getElementById('loadingScreen').style.display !== 'none') {
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        initApp();
+      } else {
+        renderAll();
+      }
+      setSyncStatus('synced');
+    }, (error) => {
+      console.error('Firebase error:', error);
+      setSyncStatus('error');
+      // Fall back to localStorage
+      try { state = JSON.parse(localStorage.getItem('pickrate_v3')) || {days:{}}; } catch { state = {days:{}}; }
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      initApp();
+      showToast('⚠️ Offline — using local data');
+    });
+  } catch(e) {
+    console.error(e);
+    document.getElementById('loadingMsg').textContent = 'Config error — check firebaseConfig';
+    setSyncStatus('error');
+  }
+}
+
+// ── Save to Firebase (debounced 800ms)
+function saveState() {
+  setSyncStatus('syncing');
+  localStorage.setItem('pickrate_v3', JSON.stringify(state)); // local backup
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    if (!dataRef) { setSyncStatus('error'); return; }
+    set(dataRef, state)
+      .then(() => setSyncStatus('synced'))
+      .catch(() => { setSyncStatus('error'); showToast('⚠️ Save failed — check connection'); });
+  }, 800);
+}
+
+// ── Date helpers
+function todayKey() { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function activeDateKey() { return document.getElementById('activeDate').value || todayKey(); }
+function getDay(key) { if (!state.days[key]) state.days[key]={orders:[],hours:null}; return state.days[key]; }
+function parseDate(str) {
+  str=str.trim(); const p=str.split('/'); if(p.length!==3) return null;
+  let [m,d,y]=p; if(y.length===2) y='20'+y;
+  const dt=new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}T12:00:00`);
+  return isNaN(dt)?null:dt.toISOString().slice(0,10);
+}
+function keyToDisplay(key) { return new Date(key+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}); }
+function fmt(n) { const s=String(Math.round(n)).padStart(4,'0'); return s.slice(0,2)+':'+s.slice(2); }
+function toMin(hhmm) { const n=parseInt(hhmm); if(isNaN(n)||n<0) return null; return Math.floor(n/100)*60+(n%100); }
+function duration(s,e) { const sm=toMin(s),em=toMin(e); if(sm===null||em===null) return null; return em-sm; }
+function calcOrder(s,e,c) {
+  const dur=duration(s,e); const cases=parseInt(c);
+  if(!dur||dur<=0||!cases||cases<=0) return null;
+  return {duration:parseFloat(dur.toFixed(2)),cases,cpm:parseFloat((cases/dur).toFixed(3)),uph:parseFloat(((cases/dur)*60).toFixed(1))};
+}
+function effectiveHours(rawH, breaks) { return rawH - (breaks*15/60); }
+
+// ── App init (called after Firebase loads)
+function initApp() {
+  document.getElementById('activeDate').value = todayKey();
+  updateLabels(); renderAll(); updateSyncCodeDisplay();
+}
+window.jumpToToday = () => { document.getElementById('activeDate').value=todayKey(); onDateChange(); };
+window.onDateChange = () => { cancelEdit(); updateLabels(); renderAll(); };
+
+function updateLabels() {
+  const key=activeDateKey(); const label=keyToDisplay(key);
+  document.getElementById('orderListDateLabel').textContent=label;
+  const hw=document.getElementById('hoursWorked');
+  if(hw){ const day=getDay(key); hw.value=day.hours||''; }
+}
+
+// ── Form
+window.onTimeInput = () => {
+  const s=document.getElementById('startTime').value;
+  const e=document.getElementById('endTime').value;
+  const c=document.getElementById('cases').value;
+  const dur=duration(s,e);
+  const durEl=document.getElementById('durationDisplay');
+  if(dur!==null&&dur>0){durEl.textContent=dur.toFixed(1)+' min';durEl.classList.add('has-value');}
+  else{durEl.textContent='—';durEl.classList.remove('has-value');}
+  document.getElementById('logBtn').disabled=!(dur>0&&c&&parseInt(c)>0);
+};
+
+window.logOrder = () => {
+  const s=document.getElementById('startTime').value;
+  const e=document.getElementById('endTime').value;
+  const c=document.getElementById('cases').value;
+  const calc=calcOrder(s,e,c); if(!calc) return;
+  const key=activeDateKey(); const day=getDay(key);
+  if(editingId!==null){
+    const idx=day.orders.findIndex(o=>o.id===editingId);
+    if(idx!==-1) day.orders[idx]={...day.orders[idx],start:s,end:e,...calc};
+    cancelEdit(); showToast('✏️ Order updated');
+  } else {
+    day.orders.push({id:Date.now()+Math.random(),start:s,end:e,...calc});
+    const nextStart=e; clearForm();
+    setTimeout(()=>{document.getElementById('startTime').value=nextStart;document.getElementById('endTime').focus();},80);
+    showToast(`✅ Logged — ${calc.uph} u/hr`);
+  }
+  saveState(); renderAll();
+};
+
+window.startEdit = (id) => {
+  const key=activeDateKey(); const order=getDay(key).orders.find(o=>o.id===id); if(!order) return;
+  editingId=id;
+  document.getElementById('startTime').value=order.start;
+  document.getElementById('endTime').value=order.end;
+  document.getElementById('cases').value=order.cases;
+  onTimeInput();
+  document.getElementById('formTitle').textContent='EDIT ORDER';
+  const lb=document.getElementById('logBtn'); lb.textContent='SAVE CHANGES'; lb.classList.add('edit-mode'); lb.disabled=false;
+  document.getElementById('cancelBtn').style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'}); renderOrderList();
+};
+
+window.cancelEdit = () => {
+  editingId=null; clearForm();
+  document.getElementById('formTitle').textContent='NEW ORDER';
+  const lb=document.getElementById('logBtn'); lb.textContent='LOG ORDER'; lb.classList.remove('edit-mode');
+  document.getElementById('cancelBtn').style.display='none'; renderOrderList();
+};
+
+function clearForm() {
+  ['startTime','endTime','cases'].forEach(id=>document.getElementById(id).value='');
+  const d=document.getElementById('durationDisplay'); d.textContent='—'; d.classList.remove('has-value');
+  document.getElementById('logBtn').disabled=true;
+}
+
+window.deleteOrder = (id) => {
+  const key=activeDateKey(); const day=getDay(key);
+  day.orders=day.orders.filter(o=>o.id!==id);
+  if(editingId===id) cancelEdit();
+  saveState(); renderAll(); showToast('Order removed');
+};
+
+// ── Render order list
+function renderOrderList() {
+  const key=activeDateKey(); const orders=getDay(key).orders;
+  const el=document.getElementById('orderList');
+  if(!orders.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">📦</div><p>No orders for this date.<br>Use the form above or the Import tab<br>to add historical data.</p></div>`;
+    return;
+  }
+  el.innerHTML=orders.map((o,i)=>{
+    const ot=o.uph>=TARGET;
+    return `<div class="order-item${o.id===editingId?' editing':''}">
+      <div class="order-num">${i+1}</div>
+      <div class="order-details">
+        <div class="order-times">${fmt(o.start)} → ${fmt(o.end)}</div>
+        <div class="order-meta">${o.duration} min · ${o.cases} cases</div>
+      </div>
+      <div class="order-rate">
+        <div class="rv ${ot?'on-track':'off-track'}">${o.uph}</div>
+        <div class="rl">u/hr</div>
+      </div>
+      <div class="order-actions">
+        <button class="icon-btn" onclick="startEdit(${o.id})">✏️</button>
+        <button class="icon-btn" onclick="deleteOrder(${o.id})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Header
+function updateHeader() {
+  const key=activeDateKey(); const day=getDay(key);
+  const totalCases=day.orders.reduce((s,o)=>s+o.cases,0);
+  const rateEl=document.getElementById('liveRate'); const fillEl=document.getElementById('progressFill');
+  const rawH=parseFloat(document.getElementById('hoursWorked')?.value)||day.hours;
+  const breaks=day.breaks!==undefined?day.breaks:2;
+  const h=rawH?effectiveHours(rawH,breaks):null;
+  if(h&&h>0&&totalCases>0){
+    const uph=totalCases/h; rateEl.textContent=uph.toFixed(1);
+    const pct=Math.min((uph/TARGET)*100,110); fillEl.style.width=pct+'%';
+    const c=uph>=TARGET?'var(--accent2)':uph>=TARGET*0.85?'var(--accent)':'var(--warn)';
+    fillEl.style.background=c; rateEl.style.color=c;
+  } else if(day.orders.length){
+    const avg=day.orders.reduce((s,o)=>s+o.uph,0)/day.orders.length;
+    rateEl.textContent=avg.toFixed(1); rateEl.style.color='var(--accent)';
+    fillEl.style.width=Math.min((avg/TARGET)*100,110)+'%'; fillEl.style.background='var(--accent)';
+  } else { rateEl.textContent='—'; rateEl.style.color='var(--text)'; fillEl.style.width='0%'; }
+}
+
+// ── Breaks
+function getBreaks() { const key=activeDateKey(); const day=getDay(key); return day.breaks!==undefined?day.breaks:2; }
+window.setBreaks = (n) => {
+  const key=activeDateKey(); const day=getDay(key); day.breaks=n; saveState();
+  document.querySelectorAll('.break-btn').forEach((b,i)=>b.classList.toggle('active',i===n));
+  updateSummary();
+};
+
+// ── Summary
+window.updateSummary = () => {
+  const key=activeDateKey(); const day=getDay(key);
+  const hours=parseFloat(document.getElementById('hoursWorked')?.value);
+  if(!isNaN(hours)&&hours>0){day.hours=hours;saveState();}
+  const breaks=getBreaks();
+  document.querySelectorAll('.break-btn').forEach((b,i)=>b.classList.toggle('active',i===breaks));
+  const orders=day.orders; const totalCases=orders.reduce((s,o)=>s+o.cases,0);
+  const best=orders.length?Math.max(...orders.map(o=>o.uph)):null;
+  const effH=day.hours?effectiveHours(day.hours,breaks):null;
+  const overall=effH&&effH>0&&totalCases>0?totalCases/effH:null;
+
+  document.getElementById('statOrders').textContent=orders.length;
+  document.getElementById('statCases').textContent=totalCases;
+  document.getElementById('statAvg').textContent=orders.length?(totalCases/orders.length).toFixed(1):'—';
+  document.getElementById('statBest').textContent=best!==null?best.toFixed(1):'—';
+  const ov=document.getElementById('statOverall');
+  const oc=document.getElementById('overallCard');
+  const os=document.getElementById('statOverallSub');
+  const eh=document.getElementById('statEffHours');
+  if(overall!==null){
+    ov.textContent=overall.toFixed(1); oc.className='stat-card full '+(overall>=TARGET?'on-target':'below');
+    os.textContent='units per hour';
+    const bl=breaks===0?'no breaks':breaks===1?'minus 1 break (15 min)':'minus 2 breaks (30 min)';
+    eh.textContent=`${effH.toFixed(2)} effective hrs — ${bl}`;
+  } else {ov.textContent='—';oc.className='stat-card full';os.textContent='Enter hours worked above';eh.textContent='';}
+
+  const vb=document.getElementById('verdictBanner');
+  if(overall!==null){
+    const good=overall>=TARGET; const diff=Math.abs(overall-TARGET).toFixed(1);
+    vb.innerHTML=`<div class="verdict ${good?'good':'bad'}"><div class="verdict-icon">${good?'🏆':'📊'}</div><div class="verdict-text">${good?'ON TARGET':'BELOW TARGET'}</div><div class="verdict-sub">${good?diff+' u/hr above target':'Need '+diff+' more u/hr to hit 160'}</div></div>`;
+  } else {vb.innerHTML='';}
+  updateHeader(); renderCharts();
+};
+
+// ── Charts
+function renderCharts() { const orders=getDay(activeDateKey()).orders; drawBar(orders); drawLine(orders); }
+
+function drawBar(orders) {
+  const cv=document.getElementById('barChart'); if(!cv) return;
+  const ctx=cv.getContext('2d'); const dpr=window.devicePixelRatio||1;
+  const w=cv.parentElement.clientWidth; const h=110;
+  cv.width=w*dpr;cv.height=h*dpr;cv.style.width=w+'px';cv.style.height=h+'px';
+  ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);
+  if(!orders.length){ctx.fillStyle='#5a6a82';ctx.font='12px DM Mono,monospace';ctx.textAlign='center';ctx.fillText('No orders yet',w/2,h/2);return;}
+  const pad={t:10,b:22,l:6,r:6};const cw=w-pad.l-pad.r;const ch=h-pad.t-pad.b;
+  const maxC=Math.max(...orders.map(o=>o.cases),1);const bw=Math.max(4,(cw/orders.length)-3);
+  orders.forEach((o,i)=>{
+    const bh=(o.cases/maxC)*ch;const x=pad.l+i*(cw/orders.length);const y=pad.t+ch-bh;
+    ctx.fillStyle=o.uph>=TARGET?'rgba(0,255,136,0.75)':'rgba(255,107,53,0.75)';
+    ctx.beginPath();ctx.roundRect(x+1,y,bw,bh,[3,3,0,0]);ctx.fill();
+    ctx.fillStyle='#5a6a82';ctx.font=`${Math.min(10,bw)}px DM Mono,monospace`;ctx.textAlign='center';
+    ctx.fillText(i+1,x+bw/2+1,h-6);
+    if(bw>18){ctx.fillStyle='#e8edf5';ctx.font='9px DM Mono,monospace';ctx.fillText(o.cases,x+bw/2+1,y-3);}
+  });
+}
+
+function drawLine(orders) {
+  const cv=document.getElementById('lineChart'); if(!cv) return;
+  const ctx=cv.getContext('2d'); const dpr=window.devicePixelRatio||1;
+  const w=cv.parentElement.clientWidth; const h=110;
+  cv.width=w*dpr;cv.height=h*dpr;cv.style.width=w+'px';cv.style.height=h+'px';
+  ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);
+  if(!orders.length){ctx.fillStyle='#5a6a82';ctx.font='12px DM Mono,monospace';ctx.textAlign='center';ctx.fillText('No orders yet',w/2,h/2);return;}
+  const pad={t:10,b:18,l:6,r:6};const cw=w-pad.l-pad.r;const ch=h-pad.t-pad.b;
+  let running=0;
+  const pts=orders.map((o,i)=>{running+=o.cases;return{x:pad.l+(i/Math.max(orders.length-1,1))*cw,val:running};});
+  if(orders.length===1)pts[0].x=pad.l+cw/2;
+  const maxV=pts[pts.length-1].val; pts.forEach(p=>p.y=pad.t+ch-(p.val/maxV)*ch);
+  const grad=ctx.createLinearGradient(0,pad.t,0,h);
+  grad.addColorStop(0,'rgba(0,255,136,0.3)');grad.addColorStop(1,'rgba(0,255,136,0)');
+  ctx.beginPath();ctx.moveTo(pts[0].x,h-pad.b);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x,h-pad.b);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++){const cx=(pts[i-1].x+pts[i].x)/2;ctx.bezierCurveTo(cx,pts[i-1].y,cx,pts[i].y,pts[i].x,pts[i].y);}
+  ctx.strokeStyle='rgba(0,255,136,0.9)';ctx.lineWidth=2;ctx.stroke();
+  pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle='#00ff88';ctx.fill();});
+  const last=pts[pts.length-1];
+  ctx.fillStyle='#00ff88';ctx.font='bold 11px DM Mono,monospace';
+  ctx.textAlign=last.x>w*0.8?'right':'left';ctx.fillText(maxV+' cases',last.x,last.y-8);
+  if(orders.length<=15)pts.forEach((p,i)=>{ctx.fillStyle='#5a6a82';ctx.font='9px DM Mono,monospace';ctx.textAlign='center';ctx.fillText(i+1,p.x,h-4);});
+}
+
+// ── Week
+window.shiftWeek = (dir) => { weekOffset+=dir; renderWeek(); };
+function renderWeek() {
+  const el=document.getElementById('weekView');
+  const today=new Date();const dow=today.getDay();
+  const monday=new Date(today);monday.setDate(today.getDate()-(dow===0?6:dow-1)+weekOffset*7);
+  const weekDates=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d;});
+  const label=`${weekDates[0].toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${weekDates[6].toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
+  document.getElementById('weekNavLabel').textContent=label;
+  const names=['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  let html='',wCases=0,wHours=0;
+  weekDates.forEach((d,i)=>{
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const dd=state.days[key]||{orders:[],hours:null};
+    const cases=dd.orders.reduce((s,o)=>s+o.cases,0);
+    const dBreaks=dd.breaks!==undefined?dd.breaks:2;const effHW=dd.hours?effectiveHours(dd.hours,dBreaks):null;const uph=effHW&&cases?(cases/effHW):null;
+    const isToday=key===todayKey();wCases+=cases;if(dd.hours)wHours+=dd.hours;
+    const pct=uph?Math.min((uph/TARGET)*100,100):0;
+    const color=!uph?'#1f2d45':uph>=TARGET?'var(--accent2)':uph>=TARGET*0.85?'var(--accent)':'var(--warn)';
+    html+=`<div class="week-day" style="${isToday?'border-color:var(--accent);':''}" onclick="jumpToDate('${key}')">
+      <div class="week-day-name" style="color:${isToday?'var(--accent)':'var(--muted)'}">${names[i]}<br><span style="font-size:10px">${d.getDate()}</span></div>
+      <div class="week-bar-wrap">
+        <div class="week-bar-track"><div class="week-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+        <div class="week-meta">${cases?cases+' cases':'—'}${dd.hours?' · '+dd.hours+'h':''}</div>
+      </div>
+      <div class="week-rate" style="color:${color}">${uph?uph.toFixed(0):'—'}</div>
+    </div>`;
+  });
+  const wUph=wHours>0&&wCases>0?wCases/wHours:null;
+  const wc=wUph&&wUph>=TARGET?'var(--accent2)':wUph?'var(--warn)':'var(--muted)';
+  html+=`<div class="stat-card" style="margin-top:14px;"><div class="stat-label">WEEK TOTAL</div>
+    <div style="display:flex;align-items:baseline;gap:8px;margin-top:4px;">
+      <div class="stat-val" style="color:${wc}">${wUph?wUph.toFixed(1):'—'}</div>
+      <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">u/hr avg</span>
+    </div>
+    <div class="stat-sub">${wCases} total cases · ${wHours.toFixed(1)} hrs worked</div></div>`;
+  el.innerHTML=html;
+}
+
+window.jumpToDate = (key) => { document.getElementById('activeDate').value=key; onDateChange(); switchTab('log'); };
+
+// ── History
+function renderHistory() {
+  const el=document.getElementById('historyView');
+  const keys=Object.keys(state.days).filter(k=>state.days[k].orders.length).sort().reverse();
+  if(!keys.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><p>No history yet.<br>Start logging or use the Import tab!</p></div>`;return;}
+  el.innerHTML=keys.map(key=>{
+    const day=state.days[key];const cases=day.orders.reduce((s,o)=>s+o.cases,0);
+    const dBreaks=day.breaks!==undefined?day.breaks:2;const effHH=day.hours?effectiveHours(day.hours,dBreaks):null;const uph=effHH&&cases?(cases/effHH).toFixed(1):'—';
+    const d=new Date(key+'T12:00:00');
+    const dateStr=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+    const color=uph!=='—'&&parseFloat(uph)>=TARGET?'var(--accent2)':uph!=='—'?'var(--warn)':'var(--muted)';
+    return `<div class="hist-item" onclick="jumpToDate('${key}')">
+      <div style="flex:1"><div class="hist-date">${dateStr}</div><div class="hist-meta">${day.orders.length} orders · ${cases} cases${day.hours?' · '+day.hours+'h':''}</div></div>
+      <div class="hist-rate" style="color:${color}">${uph}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Import
+window.runImport = () => {
+  const lines=document.getElementById('importText').value.trim().split('\n');
+  const hourLines=document.getElementById('importHours').value.trim().split('\n');
+  let imported=0,skipped=0;
+  hourLines.forEach(line=>{line=line.trim();if(!line)return;const p=line.split(',').map(s=>s.trim());if(p.length<2)return;const key=parseDate(p[0]);const hours=parseFloat(p[1]);if(!key||isNaN(hours))return;getDay(key).hours=hours;});
+  lines.forEach(line=>{
+    line=line.trim();if(!line)return;
+    const p=line.split(',').map(s=>s.trim());if(p.length<4){skipped++;return;}
+    const[ds,ss,es,cs]=p;const key=parseDate(ds);const calc=calcOrder(ss,es,parseInt(cs));
+    if(!key||!calc){skipped++;return;}
+    getDay(key).orders.push({id:Date.now()+Math.random(),start:ss,end:es,...calc});imported++;
+  });
+  Object.values(state.days).forEach(d=>d.orders.sort((a,b)=>toMin(a.start)-toMin(b.start)));
+  saveState();renderAll();
+  document.getElementById('importText').value='';document.getElementById('importHours').value='';
+  showToast(`✅ Imported ${imported} orders${skipped?' ('+skipped+' skipped)':''}`);
+  if(imported>0)switchTab('history');
+};
+
+window.exportData = () => {
+  const keys=Object.keys(state.days).sort();
+  let out='DATE,START,END,CASES,DURATION_MIN,U_PER_HR\n';
+  keys.forEach(key=>{const day=state.days[key];const ds=new Date(key+'T12:00:00').toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'});day.orders.forEach(o=>out+=`${ds},${o.start},${o.end},${o.cases},${o.duration},${o.uph}\n`);});
+  const blob=new Blob([out],{type:'text/plain'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='pickrate_export.txt';a.click();URL.revokeObjectURL(url);
+  showToast('📥 Export downloaded');
+};
+
+window.clearAll = () => {
+  if(confirm('Clear ALL data from the cloud? Cannot be undone.')){
+    state={days:{}};
+    if(dataRef) set(dataRef,state);
+    saveState();renderAll();showToast('All data cleared');
+  }
+};
+
+// ── Tab switching
+window.switchTab = (tab) => {
+  const tabs=['log','summary','week','history','import'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===tab));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='summary'){const hw=document.getElementById('hoursWorked');const day=getDay(activeDateKey());if(day.hours)hw.value=day.hours;const b=day.breaks!==undefined?day.breaks:2;document.querySelectorAll('.break-btn').forEach((btn,i)=>btn.classList.toggle('active',i===b));updateSummary();}
+  if(tab==='week')renderWeek();
+  if(tab==='history')renderHistory();
+};
+
+// ── Toast
+window.showToast = (msg) => { const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800); };
+
+function renderAll() { updateLabels();renderOrderList();updateHeader();if(document.getElementById('tab-summary').classList.contains('active'))updateSummary();if(document.getElementById('tab-week').classList.contains('active'))renderWeek();if(document.getElementById('tab-history').classList.contains('active'))renderHistory(); }
+
+
+// ── Sync helpers — use full UID
+function updateSyncCodeDisplay() {
+  const uid = getUserId();
+  const el = document.getElementById('syncCodeDisplay');
+  if (el) el.textContent = uid;
+}
+
+window.copySyncCode = () => {
+  const uid = getUserId();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(uid)
+      .then(() => showToast('📋 Device ID copied!'))
+      .catch(() => { document.getElementById('syncCodeInput').value = uid; showToast('📋 Copied to input field'); });
+  } else {
+    document.getElementById('syncCodeInput').value = uid;
+    showToast('📋 ID pasted into field below — copy it manually');
+  }
+};
+
+window.applySyncCode = () => {
+  const input = document.getElementById('syncCodeInput').value.trim();
+  if (!input.startsWith('user_') || input.length < 10) {
+    showToast('⚠️ Invalid Device ID — must start with user_'); return;
+  }
+  if (!confirm('This will switch this device to use the other device\'s data. Continue?')) return;
+  localStorage.setItem('pickrate_uid', input);
+  showToast('🔄 Switching... reloading now');
+  setTimeout(() => location.reload(), 1000);
+};
+
+// ── Start
+initFirebase();
+</script>
+</body>
+</html>
