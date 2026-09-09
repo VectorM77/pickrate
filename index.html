@@ -1,3 +1,6 @@
+
+
+Index · HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,14 +17,14 @@
   body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
   body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
   .app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 0 120px; }
-
+ 
   /* Sync */
   .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); display: inline-block; margin-left: 6px; transition: background 0.3s; flex-shrink: 0; }
   .sync-dot.synced { background: var(--accent2); }
   .sync-dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
   .sync-dot.error { background: var(--warn); }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
+ 
   /* Header */
   .header { padding: 16px 16px 10px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, #0d1525 0%, transparent 100%); position: sticky; top: 0; z-index: 10; backdrop-filter: blur(12px); }
   .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
@@ -34,7 +37,7 @@
   .target-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
   .progress-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
   .progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1), background 0.4s; }
-
+ 
   /* Date strip */
   .date-strip { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 88px; z-index: 9; }
   .date-strip label { font-family: 'DM Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); white-space: nowrap; }
@@ -44,16 +47,16 @@
   .btn-today { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--accent); font-family: 'DM Mono', monospace; font-size: 11px; padding: 7px 10px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
   /* Hidden real date input for picker */
   #datePickerInput { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
-
+ 
   /* Tabs */
   .tabs { display: flex; padding: 0 16px; gap: 4px; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 130px; z-index: 8; }
   .tab { flex: 1; padding: 10px 2px; text-align: center; font-size: 10px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; text-transform: uppercase; }
   .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
+ 
   /* Sections */
   .section { display: none; padding: 14px 16px; }
   .section.active { display: block; }
-
+ 
   /* Form */
   .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
   .form-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; color: var(--accent); margin-bottom: 12px; }
@@ -70,7 +73,7 @@
   .btn-log.dimmed { opacity: 0.4; }
   .btn-log.edit-mode { background: var(--accent2); box-shadow: 0 4px 20px rgba(0,255,136,0.3); }
   .btn-cancel { width: 100%; padding: 11px; background: none; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 13px; cursor: pointer; margin-top: 8px; }
-
+ 
   /* Hours / breaks */
   .hours-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 11px 14px; margin-bottom: 14px; }
   .hours-row label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
@@ -78,7 +81,7 @@
   .hours-row input:focus { border-color: var(--accent); }
   .break-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 12px; padding: 6px 10px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
   .break-btn.active { background: rgba(0,212,255,0.12); border-color: var(--accent); color: var(--accent); }
-
+ 
   /* Order list */
   .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
   .wrong-date-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 9px; padding: 3px 7px; cursor: pointer; letter-spacing: 0.5px; }
@@ -88,7 +91,7 @@
   .move-date-row input[type=date] { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; padding: 7px 10px; outline: none; color-scheme: dark; }
   .btn-move { background: var(--accent); border: none; border-radius: 8px; color: var(--bg); font-family: 'Bebas Neue', sans-serif; font-size: 14px; padding: 8px 12px; cursor: pointer; }
   .btn-close { background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; padding: 8px 10px; cursor: pointer; }
-
+ 
   .order-list { display: flex; flex-direction: column; gap: 8px; }
   .order-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 11px 12px; display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
   .order-item.editing { border-color: var(--accent2); background: rgba(0,255,136,0.05); }
@@ -104,7 +107,7 @@
   .order-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
   .icon-btn { background: none; border: none; color: var(--muted); font-size: 14px; cursor: pointer; padding: 3px 6px; border-radius: 6px; line-height: 1; }
   .icon-btn:active { background: rgba(255,255,255,0.08); }
-
+ 
   /* Stats */
   .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
@@ -113,7 +116,7 @@
   .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 34px; line-height: 1; }
   .stat-sub { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 2px; }
   .on-target .stat-val { color: var(--accent2); } .below .stat-val { color: var(--warn); }
-
+ 
   /* Verdict */
   .verdict { border-radius: 14px; padding: 12px 16px; text-align: center; margin-bottom: 14px; border: 1px solid; }
   .verdict.good { background: rgba(0,255,136,0.08); border-color: rgba(0,255,136,0.3); color: var(--accent2); }
@@ -121,13 +124,13 @@
   .verdict-icon { font-size: 22px; margin-bottom: 3px; }
   .verdict-text { font-size: 14px; font-weight: 600; }
   .verdict-sub { font-family: 'DM Mono', monospace; font-size: 11px; opacity: 0.7; margin-top: 2px; }
-
+ 
   /* Charts */
   .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
   .chart-title { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; }
   .chart-area { height: 110px; }
   canvas { width: 100% !important; }
-
+ 
   /* Week */
   .week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .week-nav-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--accent); font-size: 18px; padding: 6px 14px; cursor: pointer; }
@@ -139,13 +142,13 @@
   .week-bar-fill { height: 100%; border-radius: 3px; }
   .week-meta { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
   .week-rate { font-family: 'Bebas Neue', sans-serif; font-size: 24px; width: 48px; text-align: right; flex-shrink: 0; }
-
+ 
   /* History */
   .hist-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
   .hist-date { font-family: 'Bebas Neue', sans-serif; font-size: 17px; margin-bottom: 2px; }
   .hist-meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
   .hist-rate { font-family: 'Bebas Neue', sans-serif; font-size: 26px; width: 52px; text-align: right; flex-shrink: 0; }
-
+ 
   /* Import */
   .import-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
   .import-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; color: var(--accent); margin-bottom: 6px; }
@@ -155,7 +158,7 @@
   textarea:focus { border-color: var(--accent); }
   .btn-action { width: 100%; padding: 12px; background: var(--surface2); border: 1px solid var(--accent); border-radius: 10px; color: var(--accent); font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; cursor: pointer; margin-top: 10px; }
   .btn-action.muted { border-color: var(--border); color: var(--muted); }
-
+ 
   /* Misc */
   .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); }
   .empty-icon { font-size: 40px; margin-bottom: 10px; opacity: 0.4; }
@@ -163,7 +166,7 @@
   .clear-btn { width: 100%; padding: 11px; background: none; border: 1px solid var(--border); border-radius: 10px; color: var(--warn); font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; margin-top: 14px; }
   .toast { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 9px 18px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; z-index: 100; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
+ 
   /* Loading */
   .loading-screen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; gap: 16px; }
   .loading-screen .logo-big { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 4px; color: var(--accent); text-shadow: 0 0 30px rgba(0,212,255,0.5); }
@@ -171,7 +174,7 @@
   .loading-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; animation: loading 1.2s ease-in-out infinite; }
   @keyframes loading { 0%{width:0%;margin-left:0} 50%{width:60%;margin-left:20%} 100%{width:0%;margin-left:100%} }
   .loading-msg { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
-
+ 
   /* Stats tab */
   .stats-header-card { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .best-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
@@ -210,14 +213,14 @@
   .zone-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
   .zone-bar-val { font-family: 'Bebas Neue', sans-serif; font-size: 16px; width: 52px; flex-shrink: 0; text-align: right; }
   .zone-bar-count { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); width: 40px; flex-shrink: 0; text-align: left; }
-
-
+ 
+ 
   /* Day notes */
   .notes-row { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 11px 14px; margin-bottom: 14px; }
   .notes-row label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
   .notes-row textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; padding: 8px 10px; outline: none; resize: none; color-scheme: dark; min-height: 56px; }
   .notes-row textarea:focus { border-color: var(--accent); }
-
+ 
   /* Delete confirm modal */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px; }
   .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 22px; max-width: 340px; width: 100%; }
@@ -226,14 +229,14 @@
   .modal-btns { display: flex; gap: 10px; }
   .modal-btn-cancel { flex: 1; padding: 11px; background: none; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 13px; cursor: pointer; }
   .modal-btn-confirm { flex: 1; padding: 11px; background: var(--warn); border: none; border-radius: 10px; color: #fff; font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; cursor: pointer; }
-
+ 
   /* Month countdown / pace bar in header */
   .header-pace-row { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
   .pace-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-family: 'DM Mono', monospace; }
   .pace-badge.on { background: rgba(0,255,136,0.12); color: var(--accent2); border: 1px solid rgba(0,255,136,0.3); }
   .pace-badge.off { background: rgba(255,107,53,0.12); color: var(--warn); border: 1px solid rgba(255,107,53,0.3); }
   .pace-badge.neutral { background: rgba(90,106,130,0.15); color: var(--muted); border: 1px solid var(--border); }
-
+ 
   /* Monthly history card in stats */
   .month-hist-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
   .month-hist-row:last-child { border-bottom: none; }
@@ -243,7 +246,7 @@
   .month-hist-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
   .month-hist-sub { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); }
   .month-hist-val { font-family: 'Bebas Neue', sans-serif; font-size: 22px; width: 52px; text-align: right; flex-shrink: 0; }
-
+ 
   /* Zone ranking in stats */
   .zone-rank-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
   .zone-rank-row:last-child { border-bottom: none; }
@@ -254,19 +257,19 @@
   .zone-rank-fill { height: 100%; border-radius: 4px; }
   .zone-rank-val { font-family: 'Bebas Neue', sans-serif; font-size: 20px; width: 52px; text-align: right; flex-shrink: 0; }
   .zone-rank-sub { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); margin-top: 2px; }
-
+ 
 </style>
 </head>
 <body>
-
+ 
 <div class="loading-screen" id="loadingScreen">
   <div class="logo-big">PICKRATE</div>
   <div class="loading-bar"><div class="loading-bar-fill"></div></div>
   <div class="loading-msg" id="loadingMsg">Connecting to cloud...</div>
 </div>
-
+ 
 <div class="app" id="mainApp" style="display:none">
-
+ 
   <div class="header">
     <div class="header-top">
       <div class="logo">PICKRATE</div>
@@ -293,7 +296,7 @@
       <span class="pace-badge neutral" id="paceBadge"></span>
     </div>
   </div>
-
+ 
   <div class="date-strip">
     <label>Viewing</label>
     <button class="date-nav-btn" id="prevDayBtn">‹</button>
@@ -302,7 +305,7 @@
     <input type="date" id="datePickerInput">
     <button class="btn-today" id="todayBtn">TODAY</button>
   </div>
-
+ 
   <div class="tabs">
     <div class="tab active" id="tab-btn-log">Log</div>
     <div class="tab" id="tab-btn-summary">Summary</div>
@@ -311,7 +314,7 @@
     <div class="tab" id="tab-btn-import">Import</div>
     <div class="tab" id="tab-btn-stats">Stats</div>
   </div>
-
+ 
   <!-- LOG -->
   <div class="section active" id="tab-log">
     <div class="form-card">
@@ -358,7 +361,7 @@
     </div>
     <div class="order-list" id="orderList"></div>
   </div>
-
+ 
   <!-- SUMMARY -->
   <div class="section" id="tab-summary">
     <div class="notes-row">
@@ -398,7 +401,7 @@
       <div id="zoneSummaryChart"></div>
     </div>
   </div>
-
+ 
   <!-- WEEK -->
   <div class="section" id="tab-week">
     <div class="week-nav">
@@ -408,13 +411,13 @@
     </div>
     <div id="weekView"></div>
   </div>
-
+ 
   <!-- HISTORY -->
   <div class="section" id="tab-history">
     <div id="historyView"></div>
     <button class="clear-btn" id="clearAllBtn">CLEAR ALL DATA</button>
   </div>
-
+ 
   <!-- IMPORT -->
   <div class="section" id="tab-import">
     <div class="import-card">
@@ -450,7 +453,7 @@
       <button class="btn-action muted" id="exportCsvBtn" style="margin-top:8px">EXPORT TO CSV</button>
     </div>
   </div>
-
+ 
   <!-- STATS -->
   <div class="section" id="tab-stats">
     <div class="stats-header-card" id="statsPersonalBests"></div>
@@ -496,7 +499,7 @@
       </div>
     </div>
   </div>
-
+ 
 </div>
 <div class="toast" id="toast"></div>
 <div class="modal-overlay" id="deleteModal" style="display:none">
@@ -509,12 +512,12 @@
     </div>
   </div>
 </div>
-
+ 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-
+ 
 // ─── CONFIG ────────────────────────────────────────────────────────────────
 const FB_CONFIG = {
   apiKey: "AIzaSyDGsFtADLbS4b1sL9hxHbMcPBSJRM-tpNU",
@@ -526,7 +529,24 @@ const FB_CONFIG = {
   appId: "1:405339759544:web:072486edbefbe182e3654d"
 };
 const TARGET = 160;
-
+ 
+// ─── LEAVE / EXCLUDED PERIODS ───────────────────────────────────────────────
+// Date ranges (inclusive, YYYY-MM-DD) that should never count toward averages,
+// streaks, personal bests, or charts — e.g. medical leave, vacation, etc.
+// Add more objects here for future excluded periods.
+const LEAVE_RANGES = [
+  { start: '2026-07-25', end: '2026-09-11', label: 'Medical leave' }
+];
+ 
+function isLeaveDay(key) {
+  return LEAVE_RANGES.some(r => key >= r.start && key <= r.end);
+}
+ 
+function getLeaveLabel(key) {
+  const r = LEAVE_RANGES.find(r => key >= r.start && key <= r.end);
+  return r ? r.label : null;
+}
+ 
 // ─── STATE ─────────────────────────────────────────────────────────────────
 let appData = { days: {} };  // Firebase data
 let activeKey = '';          // YYYY-MM-DD — single source of truth for current date
@@ -535,7 +555,7 @@ let weekOffset = 0;
 let dataRef = null;
 let saveTimer = null;
 let currentTab = 'log';
-
+ 
 // ─── DATE UTILITIES ────────────────────────────────────────────────────────
 // Build YYYY-MM-DD from local date parts only — never use UTC
 function dateToKey(d) {
@@ -543,24 +563,24 @@ function dateToKey(d) {
     String(d.getMonth() + 1).padStart(2, '0') + '-' +
     String(d.getDate()).padStart(2, '0');
 }
-
+ 
 function todayKey() {
   return dateToKey(new Date());
 }
-
+ 
 // Parse YYYY-MM-DD key back to a local Date object
 function keyToDate(key) {
   const [y, m, d] = key.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
-
+ 
 // Human-readable label from a YYYY-MM-DD key
 function keyToLabel(key) {
   return keyToDate(key).toLocaleDateString('en-US', {
     weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
   });
 }
-
+ 
 // Parse import date strings MM/DD/YY or MM/DD/YYYY → YYYY-MM-DD
 function parseImportDate(str) {
   str = str.trim();
@@ -572,14 +592,14 @@ function parseImportDate(str) {
   if (isNaN(dt.getTime())) return null;
   return dateToKey(dt);
 }
-
+ 
 // Shift a YYYY-MM-DD key by N days
 function shiftKey(key, days) {
   const d = keyToDate(key);
   d.setDate(d.getDate() + days);
   return dateToKey(d);
 }
-
+ 
 // ─── ACTIVE DATE ───────────────────────────────────────────────────────────
 function setActiveDate(key) {
   if (!key) return;
@@ -592,7 +612,7 @@ function setActiveDate(key) {
   // Keep move-date pre-filled
   document.getElementById('moveToDate').value = key;
 }
-
+ 
 // ─── DAY DATA HELPERS ──────────────────────────────────────────────────────
 function getDay(key) {
   if (!appData.days) appData.days = {};
@@ -602,20 +622,20 @@ function getDay(key) {
   if (d.breaks === undefined || d.breaks === null) d.breaks = 2;
   return d;
 }
-
+ 
 // ─── MATH ──────────────────────────────────────────────────────────────────
 function toMin(hhmm) {
   const n = parseInt(hhmm);
   if (isNaN(n) || n < 0) return null;
   return Math.floor(n / 100) * 60 + (n % 100);
 }
-
+ 
 function calcDuration(s, e) {
   const sm = toMin(s), em = toMin(e);
   if (sm === null || em === null) return null;
   return em - sm;
 }
-
+ 
 function calcOrder(s, e, c) {
   const dur = calcDuration(s, e);
   const cases = parseInt(c);
@@ -626,11 +646,11 @@ function calcOrder(s, e, c) {
     uph: parseFloat(((cases / dur) * 60).toFixed(1))
   };
 }
-
+ 
 function effectiveHours(raw, breaks) {
   return parseFloat(raw) - (breaks * 15 / 60);
 }
-
+ 
 // Returns { avg, days } for the calendar month containing `key` (YYYY-MM-DD)
 function calcMonthlyAvg(key) {
   const [y, m] = key.split('-').map(Number);
@@ -639,6 +659,7 @@ function calcMonthlyAvg(key) {
   let totalCases = 0, totalEffH = 0, daysCount = 0;
   Object.keys(days).forEach(k => {
     if (!k.startsWith(prefix)) return;
+    if (isLeaveDay(k)) return;
     const day = days[k];
     const orders = Array.isArray(day.orders) ? day.orders : [];
     const cases = orders.reduce((s, o) => s + (Number(o.cases) || 0), 0);
@@ -653,12 +674,12 @@ function calcMonthlyAvg(key) {
   if (daysCount === 0 || totalEffH === 0) return null;
   return { avg: totalCases / totalEffH, days: daysCount };
 }
-
+ 
 function fmtTime(hhmm) {
   const s = String(Math.round(hhmm)).padStart(4, '0');
   return s.slice(0, 2) + ':' + s.slice(2);
 }
-
+ 
 // ─── FIREBASE ──────────────────────────────────────────────────────────────
 function getUserId() {
   let id = localStorage.getItem('pickrate_uid');
@@ -668,7 +689,7 @@ function getUserId() {
   }
   return id;
 }
-
+ 
 function setSyncStatus(status) {
   document.getElementById('syncDot').className = 'sync-dot ' + status;
   document.getElementById('syncLabel').textContent =
@@ -676,7 +697,7 @@ function setSyncStatus(status) {
     status === 'syncing' ? 'SAVING' :
     status === 'error' ? 'ERROR' : 'SYNC';
 }
-
+ 
 function saveData() {
   setSyncStatus('syncing');
   localStorage.setItem('pickrate_v3', JSON.stringify(appData));
@@ -688,16 +709,16 @@ function saveData() {
       .catch(() => { setSyncStatus('error'); toast('Save failed — check connection'); });
   }, 800);
 }
-
+ 
 function startDatabaseSync(db, uid) {
   dataRef = ref(db, 'users/' + uid);
   document.getElementById('loadingMsg').textContent = 'Loading your data...';
-
+ 
   onValue(dataRef, (snapshot) => {
     const data = snapshot.val();
     appData = data || { days: {} };
     if (!appData.days) appData.days = {};
-
+ 
     const loading = document.getElementById('loadingScreen');
     if (loading.style.display !== 'none') {
       loading.style.display = 'none';
@@ -725,16 +746,16 @@ function startDatabaseSync(db, uid) {
     toast('Offline — using local data');
   });
 }
-
+ 
 function initFirebase() {
   try {
     const app = initializeApp(FB_CONFIG);
     const db = getDatabase(app);
     const auth = getAuth(app);
     const uid = getUserId(); // your existing per-device ID — unchanged, still used as the data path key
-
+ 
     document.getElementById('loadingMsg').textContent = 'Signing in...';
-
+ 
     onAuthStateChanged(auth, (user) => {
       if (user) {
         // Anonymous auth session established — safe to read/write per the database rules
@@ -760,7 +781,7 @@ function initFirebase() {
     setSyncStatus('error');
   }
 }
-
+ 
 // ─── TOAST ────────────────────────────────────────────────────────────────
 function toast(msg) {
   const el = document.getElementById('toast');
@@ -768,7 +789,7 @@ function toast(msg) {
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2800);
 }
-
+ 
 // ─── RENDER: HEADER ───────────────────────────────────────────────────────
 function renderHeader() {
   const day = getDay(activeKey);
@@ -776,17 +797,17 @@ function renderHeader() {
   const totalCases = orders.reduce((s, o) => s + (Number(o.cases) || 0), 0);
   const rateEl = document.getElementById('liveRate');
   const fillEl = document.getElementById('progressFill');
-
+ 
   const rawH = day.hours ? parseFloat(day.hours) : null;
   const effH = rawH ? effectiveHours(rawH, day.breaks) : null;
-
+ 
   let uph = null;
   if (effH && effH > 0 && totalCases > 0) {
     uph = totalCases / effH;
   } else if (orders.length > 0) {
     uph = orders.reduce((s, o) => s + o.uph, 0) / orders.length;
   }
-
+ 
   if (uph !== null) {
     rateEl.textContent = uph.toFixed(1);
     const pct = Math.min((uph / TARGET) * 100, 110);
@@ -799,7 +820,7 @@ function renderHeader() {
     rateEl.style.color = 'var(--text)';
     fillEl.style.width = '0%';
   }
-
+ 
   // Monthly average
   const monthData = calcMonthlyAvg(activeKey);
   const maEl = document.getElementById('monthAvgRate');
@@ -818,7 +839,7 @@ function renderHeader() {
     maEl.style.color = 'var(--muted)';
     maSubEl.textContent = 'no data';
   }
-
+ 
   // Countdown + pace indicator
   const now = new Date();
   const lastDay = new Date(ky, km, 0).getDate(); // last day of viewed month
@@ -852,7 +873,7 @@ function renderHeader() {
     pbEl.className = 'pace-badge neutral';
   }
 }
-
+ 
 // ─── RENDER: FORM ─────────────────────────────────────────────────────────
 function updateFormCalc() {
   const s = document.getElementById('startTime').value;
@@ -861,7 +882,7 @@ function updateFormCalc() {
   const dur = calcDuration(s, e);
   const durEl = document.getElementById('durationDisplay');
   const logBtn = document.getElementById('logBtn');
-
+ 
   if (dur !== null && dur > 0) {
     durEl.textContent = dur.toFixed(1) + ' min';
     durEl.classList.add('has-value');
@@ -869,11 +890,11 @@ function updateFormCalc() {
     durEl.textContent = '—';
     durEl.classList.remove('has-value');
   }
-
+ 
   const ready = dur !== null && dur > 0 && c && parseInt(c) > 0;
   logBtn.classList.toggle('dimmed', !ready);
 }
-
+ 
 function clearForm() {
   document.getElementById('startTime').value = '';
   document.getElementById('endTime').value = '';
@@ -882,16 +903,16 @@ function clearForm() {
   document.getElementById('durationDisplay').classList.remove('has-value');
   document.getElementById('logBtn').classList.add('dimmed');
 }
-
+ 
 function doLogOrder() {
   const s = document.getElementById('startTime').value;
   const e = document.getElementById('endTime').value;
   const c = document.getElementById('cases').value;
   const calc = calcOrder(s, e, c);
   if (!calc) { toast('Check start time, end time, and cases'); return; }
-
+ 
   const day = getDay(activeKey);
-
+ 
   if (editingId !== null) {
     const idx = day.orders.findIndex(o => o.id === editingId);
     if (idx !== -1) {
@@ -916,12 +937,12 @@ function doLogOrder() {
     }, 80);
     toast('Logged — ' + calc.uph + ' u/hr');
   }
-
+ 
   saveData();
   renderOrderList();
   renderHeader();
 }
-
+ 
 function doEditOrder(id) {
   const day = getDay(activeKey);
   const order = day.orders.find(o => o.id === id);
@@ -942,7 +963,7 @@ function doEditOrder(id) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   renderOrderList();
 }
-
+ 
 function doCancelEdit() {
   editingId = null;
   document.getElementById('formTitle').textContent = 'NEW ORDER';
@@ -952,9 +973,9 @@ function doCancelEdit() {
   clearForm();
   renderOrderList();
 }
-
+ 
 let pendingDeleteId = null;
-
+ 
 function doDeleteOrder(id) {
   const day = getDay(activeKey);
   const order = day.orders.find(o => o.id === id);
@@ -965,7 +986,7 @@ function doDeleteOrder(id) {
     ' (' + order.cases + ' cases, ' + order.uph + ' u/hr)?';
   document.getElementById('deleteModal').style.display = 'flex';
 }
-
+ 
 function confirmDelete() {
   if (pendingDeleteId === null) return;
   const day = getDay(activeKey);
@@ -978,23 +999,23 @@ function confirmDelete() {
   renderHeader();
   toast('Order removed');
 }
-
+ 
 // ─── RENDER: ORDER LIST ───────────────────────────────────────────────────
 function renderOrderList() {
   const day = getDay(activeKey);
   const orders = day.orders;
   const el = document.getElementById('orderList');
   el.innerHTML = '';
-
+ 
   if (!orders.length) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><p>No orders for this date.<br>Use the form above or the Import tab.</p></div>';
     return;
   }
-
+ 
   orders.forEach((o, i) => {
     const item = document.createElement('div');
     item.className = 'order-item' + (o.id === editingId ? ' editing' : '');
-
+ 
     const onTrack = o.uph >= TARGET;
     item.innerHTML =
       '<div class="order-num">' + (i + 1) + '</div>' +
@@ -1010,13 +1031,13 @@ function renderOrderList() {
         '<button class="icon-btn edit-btn">✏️</button>' +
         '<button class="icon-btn del-btn">✕</button>' +
       '</div>';
-
+ 
     item.querySelector('.edit-btn').addEventListener('click', () => doEditOrder(o.id));
     item.querySelector('.del-btn').addEventListener('click', () => doDeleteOrder(o.id));
     el.appendChild(item);
   });
 }
-
+ 
 // ─── RENDER: SUMMARY ──────────────────────────────────────────────────────
 function renderSummary() {
   const day = getDay(activeKey);
@@ -1026,29 +1047,29 @@ function renderSummary() {
   const rawH = day.hours ? parseFloat(day.hours) : null;
   const effH = rawH ? effectiveHours(rawH, day.breaks) : null;
   const overall = effH && effH > 0 && totalCases > 0 ? totalCases / effH : null;
-
+ 
   // Sync hours input
   document.getElementById('hoursWorked').value = rawH || '';
-
+ 
   // Sync notes
   const notesEl = document.getElementById('dayNotes');
   notesEl.value = day.notes || '';
-
+ 
   // Break buttons
   [0, 1, 2].forEach(n => {
     document.getElementById('break' + n).classList.toggle('active', n === day.breaks);
   });
-
+ 
   document.getElementById('statOrders').textContent = orders.length;
   document.getElementById('statCases').textContent = totalCases;
   document.getElementById('statAvg').textContent = orders.length ? (totalCases / orders.length).toFixed(1) : '—';
   document.getElementById('statBest').textContent = best !== null ? best.toFixed(1) : '—';
-
+ 
   const ovEl = document.getElementById('statOverall');
   const ocEl = document.getElementById('overallCard');
   const osEl = document.getElementById('statOverallSub');
   const ehEl = document.getElementById('statEffHours');
-
+ 
   if (overall !== null) {
     ovEl.textContent = overall.toFixed(1);
     ocEl.className = 'stat-card full ' + (overall >= TARGET ? 'on-target' : 'below');
@@ -1061,10 +1082,17 @@ function renderSummary() {
     osEl.textContent = 'Enter hours worked above';
     ehEl.textContent = '';
   }
-
+ 
   // Verdict
   const vb = document.getElementById('verdictBanner');
-  if (overall !== null) {
+  if (isLeaveDay(activeKey)) {
+    vb.innerHTML =
+      '<div class="verdict" style="background:rgba(90,106,130,0.12);border-color:rgba(90,106,130,0.4);color:var(--muted)">' +
+        '<div class="verdict-icon">🌙</div>' +
+        '<div class="verdict-text">' + getLeaveLabel(activeKey).toUpperCase() + '</div>' +
+        '<div class="verdict-sub">Excluded from averages, streaks, and charts</div>' +
+      '</div>';
+  } else if (overall !== null) {
     const good = overall >= TARGET;
     const diff = Math.abs(overall - TARGET).toFixed(1);
     vb.innerHTML =
@@ -1076,17 +1104,17 @@ function renderSummary() {
   } else {
     vb.innerHTML = '';
   }
-
+ 
   renderCharts(orders);
   renderZoneChart('zoneSummaryChart', orders);
 }
-
+ 
 // ─── RENDER: CHARTS ───────────────────────────────────────────────────────
 function renderCharts(orders) {
   drawBar(orders);
   drawLine(orders);
 }
-
+ 
 function drawBar(orders) {
   const cv = document.getElementById('barChart');
   if (!cv) return;
@@ -1112,7 +1140,7 @@ function drawBar(orders) {
     if (bw > 18) { ctx.fillStyle = '#e8edf5'; ctx.font = '9px DM Mono,monospace'; ctx.fillText(o.cases, x + bw / 2 + 1, y - 3); }
   });
 }
-
+ 
 function drawLine(orders) {
   const cv = document.getElementById('lineChart');
   if (!cv) return;
@@ -1144,31 +1172,31 @@ function drawLine(orders) {
   ctx.textAlign = last.x > w * 0.8 ? 'right' : 'left'; ctx.fillText(maxV + ' cases', last.x, last.y - 8);
   if (orders.length <= 15) pts.forEach((p, i) => { ctx.fillStyle = '#5a6a82'; ctx.font = '9px DM Mono,monospace'; ctx.textAlign = 'center'; ctx.fillText(i + 1, p.x, h - 4); });
 }
-
+ 
 // ─── RENDER: WEEK ─────────────────────────────────────────────────────────
 function renderWeek() {
   const el = document.getElementById('weekView');
   el.innerHTML = '';
-
+ 
   // Build Mon-Sun for current week offset using local date math
   const today = new Date();
   const dow = today.getDay(); // 0=Sun
   const daysFromMon = dow === 0 ? 6 : dow - 1;
   const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysFromMon + weekOffset * 7);
-
+ 
   const weekDates = [];
   for (let i = 0; i < 7; i++) {
     weekDates.push(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i));
   }
-
+ 
   const startLabel = weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const endLabel = weekDates[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   document.getElementById('weekNavLabel').textContent = startLabel + ' - ' + endLabel;
-
+ 
   const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
   const todayStr = todayKey();
   let wCases = 0, wHours = 0;
-
+ 
   weekDates.forEach((d, i) => {
     const key = dateToKey(d);
     const dayData = appData.days && appData.days[key]
@@ -1181,54 +1209,54 @@ function renderWeek() {
     const effH = rawH ? effectiveHours(rawH, breaks) : null;
     const uph = (effH && effH > 0 && cases > 0) ? cases / effH : null;
     const isToday = key === todayStr;
-
+ 
     wCases += cases;
     if (rawH) wHours += rawH;
-
+ 
     const pct = uph ? Math.min((uph / TARGET) * 100, 100) : 0;
     const color = !uph ? '#1f2d45'
       : uph >= TARGET ? 'var(--accent2)'
       : uph >= TARGET * 0.85 ? 'var(--accent)'
       : 'var(--warn)';
-
+ 
     const row = document.createElement('div');
     row.className = 'week-day';
     if (isToday) row.style.borderColor = 'var(--accent)';
     row.addEventListener('click', () => { setActiveDate(key); switchTab('log'); });
-
+ 
     const nameDiv = document.createElement('div');
     nameDiv.className = 'week-day-name';
     nameDiv.style.color = isToday ? 'var(--accent)' : 'var(--muted)';
     nameDiv.innerHTML = dayNames[i] + '<br><span style="font-size:10px">' + d.getDate() + '</span>';
-
+ 
     const barWrap = document.createElement('div');
     barWrap.className = 'week-bar-wrap';
-
+ 
     const track = document.createElement('div');
     track.className = 'week-bar-track';
     const fill = document.createElement('div');
     fill.className = 'week-bar-fill';
     fill.style.cssText = 'width:' + pct + '%;background:' + color;
     track.appendChild(fill);
-
+ 
     const meta = document.createElement('div');
     meta.className = 'week-meta';
     meta.textContent = (cases ? cases + ' cases' : '\u2014') + (rawH ? ' \u00b7 ' + rawH + 'h' : '');
-
+ 
     barWrap.appendChild(track);
     barWrap.appendChild(meta);
-
+ 
     const rateDiv = document.createElement('div');
     rateDiv.className = 'week-rate';
     rateDiv.style.color = color;
     rateDiv.textContent = uph ? Math.round(uph).toString() : '\u2014';
-
+ 
     row.appendChild(nameDiv);
     row.appendChild(barWrap);
     row.appendChild(rateDiv);
     el.appendChild(row);
   });
-
+ 
   // Week total
   const wUph = wHours > 0 && wCases > 0 ? wCases / wHours : null;
   const wColor = wUph && wUph >= TARGET ? 'var(--accent2)' : wUph ? 'var(--warn)' : 'var(--muted)';
@@ -1244,7 +1272,7 @@ function renderWeek() {
     '<div class="stat-sub">' + wCases + ' total cases \u00b7 ' + wHours.toFixed(1) + ' hrs worked</div>';
   el.appendChild(card);
 }
-
+ 
 // ─── RENDER: HISTORY ──────────────────────────────────────────────────────
 function renderHistory() {
   const el = document.getElementById('historyView');
@@ -1255,12 +1283,12 @@ function renderHistory() {
       return d && Array.isArray(d.orders) && d.orders.length > 0;
     })
     .sort().reverse();
-
+ 
   if (!keys.length) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>No history yet.<br>Start logging or use the Import tab!</p></div>';
     return;
   }
-
+ 
   keys.forEach(key => {
     const day = appData.days[key];
     const orders = Array.isArray(day.orders) ? day.orders : [];
@@ -1271,7 +1299,7 @@ function renderHistory() {
     const uph = effH && effH > 0 && cases > 0 ? (cases / effH).toFixed(1) : null;
     const color = uph !== null && parseFloat(uph) >= TARGET ? 'var(--accent2)'
       : uph !== null ? 'var(--warn)' : 'var(--muted)';
-
+ 
     const item = document.createElement('div');
     item.className = 'hist-item';
     item.innerHTML =
@@ -1284,7 +1312,7 @@ function renderHistory() {
     el.appendChild(item);
   });
 }
-
+ 
 // ─── TABS ─────────────────────────────────────────────────────────────────
 function switchTab(tab) {
   currentTab = tab;
@@ -1298,7 +1326,7 @@ function switchTab(tab) {
   if (tab === 'history') renderHistory();
   if (tab === 'stats') renderStats();
 }
-
+ 
 // ─── RENDER ALL ───────────────────────────────────────────────────────────
 function renderAll() {
   setActiveDate(activeKey || todayKey()); // refresh display labels
@@ -1309,13 +1337,13 @@ function renderAll() {
   if (currentTab === 'history') renderHistory();
   if (currentTab === 'stats') renderStats();
 }
-
+ 
 // ─── IMPORT / EXPORT ──────────────────────────────────────────────────────
 function doImport() {
   const orderLines = document.getElementById('importText').value.trim().split('\n');
   const hourLines = document.getElementById('importHours').value.trim().split('\n');
   let imported = 0, skipped = 0;
-
+ 
   hourLines.forEach(line => {
     line = line.trim();
     if (!line) return;
@@ -1326,7 +1354,7 @@ function doImport() {
     if (!key || isNaN(hours)) return;
     getDay(key).hours = hours;
   });
-
+ 
   orderLines.forEach(line => {
     line = line.trim();
     if (!line) return;
@@ -1339,14 +1367,14 @@ function doImport() {
     getDay(key).orders.push({ id: Date.now() + Math.random(), start: ss, end: es, ...calc });
     imported++;
   });
-
+ 
   // Sort orders by start time
   Object.values(appData.days).forEach(d => {
     if (Array.isArray(d.orders)) {
       d.orders.sort((a, b) => (toMin(a.start) || 0) - (toMin(b.start) || 0));
     }
   });
-
+ 
   saveData();
   renderAll();
   document.getElementById('importText').value = '';
@@ -1354,7 +1382,7 @@ function doImport() {
   toast('Imported ' + imported + ' orders' + (skipped ? ' (' + skipped + ' skipped)' : ''));
   if (imported > 0) switchTab('history');
 }
-
+ 
 function doExport() {
   const keys = Object.keys(appData.days || {}).sort();
   let out = 'DATE,START,END,CASES,DURATION_MIN,U_PER_HR\n';
@@ -1374,13 +1402,13 @@ function doExport() {
   URL.revokeObjectURL(url);
   toast('Export downloaded');
 }
-
+ 
 function doMoveDate() {
   const fromKey = activeKey;
   const toKey = document.getElementById('moveToDate').value;
   if (!toKey || toKey === fromKey) { toast('Pick a different target date'); return; }
   if (!appData.days[fromKey]) { toast('No data to move'); return; }
-
+ 
   const existing = appData.days[toKey];
   if (existing && Array.isArray(existing.orders) && existing.orders.length > 0) {
     if (!confirm('Target date already has orders. Merge them?')) return;
@@ -1395,18 +1423,19 @@ function doMoveDate() {
   renderAll();
   toast('Moved ' + fromKey + ' to ' + toKey);
 }
-
-
+ 
+ 
 // ── Monthly history chart ────────────────────────────────────────────────
 function renderMonthHistory() {
   const el = document.getElementById('monthHistChart');
   if (!el) return;
   el.innerHTML = '';
   const days = appData.days || {};
-
+ 
   // Group by YYYY-MM
   const months = {};
   Object.keys(days).forEach(key => {
+    if (isLeaveDay(key)) return;
     const day = days[key];
     const orders = Array.isArray(day.orders) ? day.orders : [];
     const cases = orders.reduce((s, o) => s + (Number(o.cases) || 0), 0);
@@ -1420,16 +1449,16 @@ function renderMonthHistory() {
     months[mKey].totalEffH += effH;
     months[mKey].days++;
   });
-
+ 
   const mKeys = Object.keys(months).sort();
   if (!mKeys.length) {
     el.innerHTML = '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--muted);padding:8px 0">No monthly data yet.</div>';
     return;
   }
-
+ 
   const avgs = mKeys.map(k => ({ key: k, avg: months[k].totalCases / months[k].totalEffH, days: months[k].days }));
   const maxAvg = Math.max(...avgs.map(a => a.avg), TARGET);
-
+ 
   avgs.reverse().forEach(m => {
     const [y, mo] = m.key.split('-').map(Number);
     const label = new Date(y, mo - 1, 1).toLocaleString('en-US', { month: 'short', year: '2-digit' }).toUpperCase();
@@ -1447,14 +1476,14 @@ function renderMonthHistory() {
     el.appendChild(row);
   });
 }
-
+ 
 // ── Zone performance ranking ──────────────────────────────────────────────
 function renderZoneRanking() {
   const el = document.getElementById('zoneRankingChart');
   if (!el) return;
   el.innerHTML = '';
   const allOrders = getAllOrders();
-
+ 
   const buckets = {};
   allOrders.forEach(o => {
     const z = o.zone || '—';
@@ -1462,17 +1491,17 @@ function renderZoneRanking() {
     buckets[z].totalUph += o.uph;
     buckets[z].count++;
   });
-
+ 
   const ranked = Object.keys(buckets)
     .map(z => ({ zone: z, avg: buckets[z].totalUph / buckets[z].count, count: buckets[z].count }))
     .filter(r => r.zone !== '—')
     .sort((a, b) => b.avg - a.avg);
-
+ 
   if (!ranked.length) {
     el.innerHTML = '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--muted);padding:8px 0">No zone data yet — assign zones when logging.</div>';
     return;
   }
-
+ 
   const maxAvg = Math.max(...ranked.map(r => r.avg), TARGET);
   ranked.forEach((r, i) => {
     const pct = (r.avg / maxAvg) * 100;
@@ -1491,18 +1520,20 @@ function renderZoneRanking() {
     el.appendChild(row);
   });
 }
-
+ 
 // ─── RENDER: STATS ────────────────────────────────────────────────────────
 function getAllOrders() {
   const all = [];
-  Object.values(appData.days || {}).forEach(day => {
+  Object.keys(appData.days || {}).forEach(key => {
+    if (isLeaveDay(key)) return;
+    const day = appData.days[key];
     if (Array.isArray(day.orders)) all.push(...day.orders);
   });
   return all;
 }
-
+ 
 let trendRange = 30;
-
+ 
 function renderStats() {
   renderPersonalBests();
   renderZoneChart('zoneStatsChart', getAllOrders());
@@ -1511,7 +1542,7 @@ function renderStats() {
   renderMonthHistory();
   renderZoneRanking();
   renderCalendar();
-
+ 
   // Wire range buttons (only once)
   document.querySelectorAll('.trend-range-btn').forEach(btn => {
     btn.onclick = () => {
@@ -1522,7 +1553,7 @@ function renderStats() {
     };
   });
 }
-
+ 
 // ── Personal bests + streak ──────────────────────────────────────────────
 function renderPersonalBests() {
   const days = appData.days || {};
@@ -1530,17 +1561,18 @@ function renderPersonalBests() {
   let worstDayRate = Infinity, worstDayKey = '';
   let totalDays = 0, totalCasesAll = 0;
   let streak = 0, maxStreak = 0, currentStreak = 0;
-
+ 
   // Collect all day rates
   const dayRates = [];
   Object.keys(days).sort().forEach(key => {
+    if (isLeaveDay(key)) return;
     const day = days[key];
     const orders = Array.isArray(day.orders) ? day.orders : [];
     const cases = orders.reduce((s, o) => s + (Number(o.cases) || 0), 0);
     const rawH = day.hours ? parseFloat(day.hours) : null;
     const effH = rawH ? effectiveHours(rawH, day.breaks !== undefined ? day.breaks : 2) : null;
     const uph = effH && effH > 0 && cases > 0 ? cases / effH : null;
-
+ 
     if (uph !== null) {
       dayRates.push({ key, uph });
       totalDays++;
@@ -1548,17 +1580,18 @@ function renderPersonalBests() {
       if (uph > bestDayRate) { bestDayRate = uph; bestDayKey = key; }
       if (uph < worstDayRate) { worstDayRate = uph; worstDayKey = key; }
     }
-
+ 
     // Best single order
     orders.forEach(o => {
       if (o.uph > bestOrderRate) { bestOrderRate = o.uph; bestOrderDate = key; }
     });
   });
-
+ 
   // Current streak (consecutive days on target going back from today)
   const todayStr = todayKey();
   let checkKey = todayStr;
   for (let i = 0; i < 365; i++) {
+    if (isLeaveDay(checkKey)) { checkKey = shiftKey(checkKey, -1); continue; }
     const d = days[checkKey];
     if (!d) { checkKey = shiftKey(checkKey, -1); if (i === 0) continue; else break; }
     const orders = Array.isArray(d.orders) ? d.orders : [];
@@ -1569,20 +1602,20 @@ function renderPersonalBests() {
     if (uph !== null && uph >= TARGET) { currentStreak++; checkKey = shiftKey(checkKey, -1); }
     else break;
   }
-
+ 
   // Overall avg
   const avgRate = dayRates.length > 0
     ? dayRates.reduce((s, d) => s + d.uph, 0) / dayRates.length
     : null;
-
+ 
   // Monthly avg (current calendar month)
   const monthData = calcMonthlyAvg(todayKey());
   const [ty2, tm2] = todayKey().split('-').map(Number);
   const curMonthName = new Date(ty2, tm2 - 1, 1).toLocaleString('en-US', { month: 'long' });
-
+ 
   const startDate = new Date(2025, 9, 15); // Oct 15 2025
   const daysWorked = totalDays;
-
+ 
   const el = document.getElementById('statsPersonalBests');
   el.innerHTML =
     '<div class="best-card highlight">' +
@@ -1626,7 +1659,7 @@ function renderPersonalBests() {
       '</div>' +
     '</div>';
 }
-
+ 
 // ── Trend line chart ─────────────────────────────────────────────────────
 function renderTrendChart() {
   const cv = document.getElementById('trendChart');
@@ -1637,14 +1670,15 @@ function renderTrendChart() {
   cv.width = w * dpr; cv.height = h * dpr;
   cv.style.width = w + 'px'; cv.style.height = h + 'px';
   ctx.scale(dpr, dpr); ctx.clearRect(0, 0, w, h);
-
+ 
   // Build data points
   const days = appData.days || {};
   const cutoff = shiftKey(todayKey(), -(trendRange === 999 ? 9999 : trendRange - 1));
   const pts = [];
-
+ 
   Object.keys(days).sort().forEach(key => {
     if (trendRange !== 999 && key < cutoff) return;
+    if (isLeaveDay(key)) return;
     const day = days[key];
     const orders = Array.isArray(day.orders) ? day.orders : [];
     const cases = orders.reduce((s, o) => s + (Number(o.cases) || 0), 0);
@@ -1653,20 +1687,20 @@ function renderTrendChart() {
     const uph = effH && effH > 0 && cases > 0 ? cases / effH : null;
     if (uph !== null) pts.push({ key, uph });
   });
-
+ 
   if (pts.length < 2) {
     ctx.fillStyle = '#5a6a82'; ctx.font = '12px DM Mono,monospace';
     ctx.textAlign = 'center'; ctx.fillText('Not enough data yet', w / 2, h / 2); return;
   }
-
+ 
   const pad = { t: 14, b: 24, l: 36, r: 10 };
   const cw = w - pad.l - pad.r, ch = h - pad.t - pad.b;
   const maxR = Math.max(...pts.map(p => p.uph), TARGET * 1.2);
   const minR = Math.max(0, Math.min(...pts.map(p => p.uph), TARGET * 0.7));
-
+ 
   function px(i) { return pad.l + (i / (pts.length - 1)) * cw; }
   function py(v) { return pad.t + ch - ((v - minR) / (maxR - minR)) * ch; }
-
+ 
   // Target line
   const ty = py(TARGET);
   ctx.beginPath(); ctx.moveTo(pad.l, ty); ctx.lineTo(pad.l + cw, ty);
@@ -1674,13 +1708,13 @@ function renderTrendChart() {
   ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle = 'rgba(255,107,53,0.7)'; ctx.font = '9px DM Mono,monospace';
   ctx.textAlign = 'left'; ctx.fillText('160', pad.l - 34, ty + 3);
-
+ 
   // Y axis labels
   ctx.fillStyle = '#5a6a82'; ctx.font = '9px DM Mono,monospace'; ctx.textAlign = 'right';
   [minR, (minR + maxR) / 2, maxR].forEach(v => {
     ctx.fillText(Math.round(v), pad.l - 4, py(v) + 3);
   });
-
+ 
   // Gradient fill under line
   const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + ch);
   grad.addColorStop(0, 'rgba(0,255,136,0.2)');
@@ -1690,7 +1724,7 @@ function renderTrendChart() {
   pts.forEach((p, i) => { ctx.lineTo(px(i), py(p.uph)); });
   ctx.lineTo(px(pts.length - 1), pad.t + ch);
   ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
-
+ 
   // Line
   ctx.beginPath(); ctx.moveTo(px(0), py(pts[0].uph));
   for (let i = 1; i < pts.length; i++) {
@@ -1698,13 +1732,13 @@ function renderTrendChart() {
     ctx.bezierCurveTo(cx, py(pts[i - 1].uph), cx, py(pts[i].uph), px(i), py(pts[i].uph));
   }
   ctx.strokeStyle = 'rgba(0,255,136,0.9)'; ctx.lineWidth = 2; ctx.stroke();
-
+ 
   // Dots — color by on/off target
   pts.forEach((p, i) => {
     ctx.beginPath(); ctx.arc(px(i), py(p.uph), 3, 0, Math.PI * 2);
     ctx.fillStyle = p.uph >= TARGET ? '#00ff88' : '#ff6b35'; ctx.fill();
   });
-
+ 
   // X axis: show first, last, and a few middle dates
   ctx.fillStyle = '#5a6a82'; ctx.font = '8px DM Mono,monospace'; ctx.textAlign = 'center';
   const showEvery = Math.max(1, Math.floor(pts.length / 4));
@@ -1716,7 +1750,7 @@ function renderTrendChart() {
     }
   });
 }
-
+ 
 // ── Day of week bar chart ────────────────────────────────────────────────
 function renderDowChart() {
   const cv = document.getElementById('dowChart');
@@ -1727,11 +1761,12 @@ function renderDowChart() {
   cv.width = w * dpr; cv.height = h * dpr;
   cv.style.width = w + 'px'; cv.style.height = h + 'px';
   ctx.scale(dpr, dpr); ctx.clearRect(0, 0, w, h);
-
+ 
   const buckets = [[], [], [], [], [], [], []]; // Mon=0 ... Sun=6
   const days = appData.days || {};
-
+ 
   Object.keys(days).forEach(key => {
+    if (isLeaveDay(key)) return;
     const day = days[key];
     const orders = Array.isArray(day.orders) ? day.orders : [];
     const cases = orders.reduce((s, o) => s + (Number(o.cases) || 0), 0);
@@ -1744,21 +1779,21 @@ function renderDowChart() {
     const idx = dow === 0 ? 6 : dow - 1; // Mon=0
     buckets[idx].push(uph);
   });
-
+ 
   const avgs = buckets.map(b => b.length ? b.reduce((s, v) => s + v, 0) / b.length : null);
   const names = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
   const hasData = avgs.some(v => v !== null);
-
+ 
   if (!hasData) {
     ctx.fillStyle = '#5a6a82'; ctx.font = '12px DM Mono,monospace';
     ctx.textAlign = 'center'; ctx.fillText('Not enough data yet', w / 2, h / 2); return;
   }
-
+ 
   const pad = { t: 10, b: 24, l: 6, r: 6 };
   const cw = w - pad.l - pad.r, ch = h - pad.t - pad.b;
   const maxV = Math.max(...avgs.filter(v => v !== null), TARGET);
   const bw = (cw / 7) - 4;
-
+ 
   avgs.forEach((avg, i) => {
     const x = pad.l + i * (cw / 7) + 2;
     if (avg === null) {
@@ -1777,24 +1812,24 @@ function renderDowChart() {
     ctx.fillStyle = '#5a6a82'; ctx.font = '8px DM Mono,monospace'; ctx.textAlign = 'center';
     ctx.fillText(names[i], x + bw / 2, h - 6);
   });
-
+ 
   // Target line
   const ty = pad.t + ch - (TARGET / maxV) * ch;
   ctx.beginPath(); ctx.moveTo(pad.l, ty); ctx.lineTo(pad.l + cw, ty);
   ctx.strokeStyle = 'rgba(255,107,53,0.6)'; ctx.lineWidth = 1;
   ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
 }
-
+ 
 // ── Calendar heatmap ─────────────────────────────────────────────────────
 function renderCalendar() {
   const el = document.getElementById('calendarGrid');
   el.innerHTML = '';
   const days = appData.days || {};
-
+ 
   // Find date range: Oct 15 2025 to today
   const startDate = new Date(2025, 9, 15);
   const endDate = new Date();
-
+ 
   // Build month groups
   const months = {};
   const cur = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
@@ -1803,23 +1838,23 @@ function renderCalendar() {
     months[mKey] = { year: cur.getFullYear(), month: cur.getMonth() };
     cur.setMonth(cur.getMonth() + 1);
   }
-
+ 
   const monthKeys = Object.keys(months).sort().reverse(); // Most recent first
   document.getElementById('calendarTitle').textContent =
     'PERFORMANCE CALENDAR — OCT 2025 TO TODAY';
-
+ 
   monthKeys.forEach(mKey => {
     const { year, month } = months[mKey];
     const monthDiv = document.createElement('div');
     monthDiv.className = 'cal-month';
-
+ 
     const label = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     monthDiv.innerHTML = '<div class="cal-month-label">' + label.toUpperCase() + '</div>' +
       '<div class="cal-dow-row"><div class="cal-dow-label">M</div><div class="cal-dow-label">T</div><div class="cal-dow-label">W</div><div class="cal-dow-label">T</div><div class="cal-dow-label">F</div><div class="cal-dow-label">S</div><div class="cal-dow-label">S</div></div>';
-
+ 
     const grid = document.createElement('div');
     grid.className = 'cal-grid';
-
+ 
     // First day of month
     const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
     const offset = firstDay === 0 ? 6 : firstDay - 1; // Mon=0
@@ -1828,7 +1863,7 @@ function renderCalendar() {
       empty.style.cssText = 'aspect-ratio:1';
       grid.appendChild(empty);
     }
-
+ 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(year, month, d);
@@ -1839,22 +1874,32 @@ function renderCalendar() {
         grid.appendChild(empty);
         continue;
       }
-
+ 
       const key = dateToKey(date);
       const dayData = days[key];
       const cell = document.createElement('div');
       cell.className = 'cal-cell';
-
+ 
       let bg = 'var(--border)';
       let tip = key + ': no data';
-
+ 
+      if (isLeaveDay(key)) {
+        bg = 'repeating-linear-gradient(45deg, rgba(90,106,130,0.35), rgba(90,106,130,0.35) 3px, rgba(90,106,130,0.15) 3px, rgba(90,106,130,0.15) 6px)';
+        tip = key + ': ' + getLeaveLabel(key) + ' (excluded from averages)';
+        cell.style.background = bg;
+        cell.setAttribute('data-tip', tip);
+        cell.addEventListener('click', () => { setActiveDate(key); switchTab('log'); });
+        grid.appendChild(cell);
+        continue;
+      }
+ 
       if (dayData && Array.isArray(dayData.orders) && dayData.orders.length > 0) {
         const orders = dayData.orders;
         const cases = orders.reduce((s, o) => s + (Number(o.cases) || 0), 0);
         const rawH = dayData.hours ? parseFloat(dayData.hours) : null;
         const effH = rawH ? effectiveHours(rawH, dayData.breaks !== undefined ? dayData.breaks : 2) : null;
         const uph = effH && effH > 0 && cases > 0 ? cases / effH : null;
-
+ 
         if (uph !== null) {
           bg = uph >= TARGET ? 'rgba(0,255,136,0.8)'
              : uph >= TARGET * 0.85 ? 'rgba(0,212,255,0.8)'
@@ -1865,23 +1910,23 @@ function renderCalendar() {
           tip = key + ': ' + cases + ' cases (no hours logged)';
         }
       }
-
+ 
       cell.style.background = bg;
       cell.setAttribute('data-tip', tip);
       cell.addEventListener('click', () => { setActiveDate(key); switchTab('log'); });
       grid.appendChild(cell);
     }
-
+ 
     monthDiv.appendChild(grid);
     el.appendChild(monthDiv);
   });
 }
-
-
+ 
+ 
 // ─── ZONES ────────────────────────────────────────────────────────────────
 const ZONES = ['30', '39', '40', '60', 'M', 'AM', '55', 'A01', 'A02', 'A04', 'A06', 'A07'];
 let selectedZone = null;
-
+ 
 function buildZoneSelector() {
   const row = document.getElementById('zoneRow');
   row.innerHTML = '';
@@ -1896,23 +1941,23 @@ function buildZoneSelector() {
     row.appendChild(btn);
   });
 }
-
+ 
 function clearZone() {
   selectedZone = null;
   buildZoneSelector();
 }
-
+ 
 // ── Zone bar chart (shared renderer) ─────────────────────────────────────
 function renderZoneChart(containerId, orders) {
   const el = document.getElementById(containerId);
   if (!el) return;
   el.innerHTML = '';
-
+ 
   // Bucket orders by zone
   const buckets = {};
   ZONES.forEach(z => buckets[z] = { totalUph: 0, count: 0, cases: 0 });
   let unzoned = { totalUph: 0, count: 0, cases: 0 };
-
+ 
   orders.forEach(o => {
     const z = o.zone;
     const target = (z && buckets[z]) ? buckets[z] : (z ? null : unzoned);
@@ -1921,29 +1966,29 @@ function renderZoneChart(containerId, orders) {
     target.count++;
     target.cases += Number(o.cases) || 0;
   });
-
+ 
   // Build display list — only zones with data
   const rows = ZONES
     .map(z => ({ zone: z, ...buckets[z], avg: buckets[z].count > 0 ? buckets[z].totalUph / buckets[z].count : null }))
     .filter(r => r.count > 0);
-
+ 
   if (unzoned.count > 0) {
     rows.push({ zone: '—', ...unzoned, avg: unzoned.totalUph / unzoned.count });
   }
-
+ 
   if (!rows.length) {
     el.innerHTML = '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--muted);padding:8px 0">No zone data yet - select a zone when logging orders.</div>';
     return;
   }
-
+ 
   const maxAvg = Math.max(...rows.map(r => r.avg), TARGET);
-
+ 
   rows.forEach(r => {
     const pct = (r.avg / maxAvg) * 100;
     const color = r.avg >= TARGET ? 'var(--accent2)'
       : r.avg >= TARGET * 0.85 ? 'var(--accent)'
       : 'var(--warn)';
-
+ 
     const row = document.createElement('div');
     row.className = 'zone-bar-row';
     row.innerHTML =
@@ -1956,7 +2001,7 @@ function renderZoneChart(containerId, orders) {
     el.appendChild(row);
   });
 }
-
+ 
 // ─── CSV EXPORT ───────────────────────────────────────────────────────────
 function doExportCsv() {
   const keys = Object.keys(appData.days || {}).sort();
@@ -1983,22 +2028,22 @@ function doExportCsv() {
   URL.revokeObjectURL(url);
   toast('CSV downloaded');
 }
-
+ 
 // ─── WIRE UP ALL EVENTS ───────────────────────────────────────────────────
 function wireEvents() {
   // Zone selector
   buildZoneSelector();
   document.getElementById('zoneClearBtn').addEventListener('click', clearZone);
-
+ 
   // Form inputs
   document.getElementById('startTime').addEventListener('input', updateFormCalc);
   document.getElementById('endTime').addEventListener('input', updateFormCalc);
   document.getElementById('cases').addEventListener('input', updateFormCalc);
-
+ 
   // Log button — NOT disabled, just styled dimmed; we validate inside doLogOrder
   document.getElementById('logBtn').addEventListener('click', doLogOrder);
   document.getElementById('cancelBtn').addEventListener('click', doCancelEdit);
-
+ 
   // Date navigation
   document.getElementById('prevDayBtn').addEventListener('click', () => {
     setActiveDate(shiftKey(activeKey, -1));
@@ -2012,7 +2057,7 @@ function wireEvents() {
     setActiveDate(todayKey());
     renderAll();
   });
-
+ 
   // Click the date display to open the hidden picker
   document.getElementById('dateDisplay').addEventListener('click', () => {
     document.getElementById('datePickerInput').showPicker
@@ -2025,12 +2070,12 @@ function wireEvents() {
       renderAll();
     }
   });
-
+ 
   // Tabs
   ['log', 'summary', 'week', 'history', 'import', 'stats'].forEach(tab => {
     document.getElementById('tab-btn-' + tab).addEventListener('click', () => switchTab(tab));
   });
-
+ 
   // Summary: hours + breaks
   document.getElementById('hoursWorked').addEventListener('blur', function() {
     this.value = this.value.replace(/[^0-9.]/g, '');
@@ -2046,7 +2091,7 @@ function wireEvents() {
     renderSummary();
     renderHeader();
   });
-
+ 
   document.getElementById('clearHoursBtn').addEventListener('click', () => {
     getDay(activeKey).hours = null;
     document.getElementById('hoursWorked').value = '';
@@ -2062,11 +2107,11 @@ function wireEvents() {
       renderHeader();
     });
   });
-
+ 
   // Week nav
   document.getElementById('prevWeekBtn').addEventListener('click', () => { weekOffset--; renderWeek(); });
   document.getElementById('nextWeekBtn').addEventListener('click', () => { weekOffset++; renderWeek(); });
-
+ 
   // Wrong date / move
   document.getElementById('wrongDateBtn').addEventListener('click', () => {
     const banner = document.getElementById('moveDateBanner');
@@ -2076,11 +2121,11 @@ function wireEvents() {
   document.getElementById('moveDateClose').addEventListener('click', () => {
     document.getElementById('moveDateBanner').style.display = 'none';
   });
-
+ 
   // Import / export
   document.getElementById('importBtn').addEventListener('click', doImport);
   document.getElementById('exportBtn').addEventListener('click', doExport);
-
+ 
   // Sync
   document.getElementById('copyDeviceIdBtn').addEventListener('click', () => {
     const uid = getUserId();
@@ -2095,14 +2140,14 @@ function wireEvents() {
     toast('Switching — reloading...');
     setTimeout(() => location.reload(), 1000);
   });
-
+ 
   // Delete modal
   document.getElementById('deleteCancelBtn').addEventListener('click', () => {
     pendingDeleteId = null;
     document.getElementById('deleteModal').style.display = 'none';
   });
   document.getElementById('deleteConfirmBtn').addEventListener('click', confirmDelete);
-
+ 
   // Close modal on overlay click
   document.getElementById('deleteModal').addEventListener('click', (e) => {
     if (e.target === document.getElementById('deleteModal')) {
@@ -2110,16 +2155,16 @@ function wireEvents() {
       document.getElementById('deleteModal').style.display = 'none';
     }
   });
-
+ 
   // Notes auto-save on blur
   document.getElementById('dayNotes').addEventListener('blur', function() {
     getDay(activeKey).notes = this.value.trim() || null;
     saveData();
   });
-
+ 
   // CSV export
   document.getElementById('exportCsvBtn').addEventListener('click', doExportCsv);
-
+ 
   // Clear all
   document.getElementById('clearAllBtn').addEventListener('click', () => {
     if (!confirm('Clear ALL data from cloud? Cannot be undone.')) return;
@@ -2130,10 +2175,11 @@ function wireEvents() {
     toast('All data cleared');
   });
 }
-
+ 
 // ─── BOOT ─────────────────────────────────────────────────────────────────
 wireEvents();
 initFirebase();
 </script>
 </body>
 </html>
+ 
