@@ -1,5 +1,3 @@
-<!-- No regrets, that's my motto.  That, and everybody Wang Chung tonight. -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -257,6 +255,15 @@
   .zone-rank-val { font-family: 'Bebas Neue', sans-serif; font-size: 20px; width: 52px; text-align: right; flex-shrink: 0; }
   .zone-rank-sub { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); margin-top: 2px; }
  
+
+  [hidden] { display: none !important; }
+  .auth-panel { position: relative; z-index: 2; max-width: 480px; margin: 40px auto; padding: 16px; }
+  .auth-panel p, .account-detail { font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+  .auth-panel .input-group { margin: 14px 0; }
+  .auth-panel input { font-size: 16px; }
+  .auth-message { color: var(--accent); margin: 12px 0; }
+  button:disabled { opacity: .5; cursor: wait; }
+  #saveNotice { position: fixed; z-index: 210; bottom: 12px; left: 50%; transform: translateX(-50%); width: min(440px, 95vw); background: var(--surface); border: 1px solid var(--warn); border-radius: 12px; padding: 12px; font-size: 13px; }
 </style>
 </head>
 <body>
@@ -267,6 +274,36 @@
   <div class="loading-msg" id="loadingMsg">Connecting to cloud...</div>
 </div>
  
+
+<section class="auth-panel" id="authPanel" hidden aria-label="Account access">
+  <div class="logo">PICKRATE</div>
+  <div class="form-card">
+    <h3 id="authTitle">SIGN IN</h3>
+    <p>Sign in to sync your private PickRate history across devices.</p>
+    <form id="authForm">
+      <div class="input-group"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="username" required></div>
+      <div class="input-group"><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" required minlength="6"></div>
+      <div class="input-group" id="confirmGroup" hidden><label for="authConfirm">Confirm password</label><input id="authConfirm" type="password" autocomplete="new-password"></div>
+      <button class="btn-log" id="authSubmit" type="submit">SIGN IN</button>
+      <button class="btn-action" id="authToggle" type="button">CREATE AN ACCOUNT</button>
+      <button class="btn-cancel" id="resetPassword" type="button">SEND PASSWORD RESET EMAIL</button>
+    </form>
+    <div id="verificationPanel" hidden>
+      <p id="verificationEmail"></p>
+      <button class="btn-action" id="checkVerification">I VERIFIED MY EMAIL — CONTINUE</button>
+      <button class="btn-action" id="resendVerification">RESEND VERIFICATION EMAIL</button>
+    </div>
+    <button class="btn-action" id="retryAccount" hidden>RETRY CONNECTION</button>
+    <button class="btn-cancel" id="authSignOut" hidden>SIGN OUT / USE ANOTHER ACCOUNT</button>
+    <p class="auth-message" id="authMessage" role="status" aria-live="polite"></p>
+  </div>
+</section>
+<div id="saveNotice" hidden role="status">
+  <span id="saveMessage"></span>
+  <button class="btn-action" id="downloadUnsaved" hidden>DOWNLOAD UNSAVED JSON BACKUP</button>
+  <button class="btn-action" id="reloadSaved" hidden>DISCARD UNSAVED CHANGE AND RELOAD</button>
+</div>
+
 <div class="app" id="mainApp" style="display:none">
  
   <div class="header">
@@ -431,19 +468,12 @@
       <button class="btn-action" id="importBtn">IMPORT DATA</button>
     </div>
     <div class="import-card" style="border-color:var(--accent)">
-      <h3>SYNC DEVICES</h3>
-      <p>Copy your Device ID on one device and paste it on another to share data.</p>
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">
-        <div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Your Device ID</div>
-        <div id="syncCodeDisplay" style="font-family:DM Mono,monospace;font-size:13px;color:var(--accent);word-break:break-all;line-height:1.5">loading...</div>
-        <button id="copyDeviceIdBtn" style="margin-top:10px;width:100%;background:rgba(0,212,255,0.1);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;padding:8px;cursor:pointer">COPY DEVICE ID</button>
-      </div>
-      <label class="import-lbl">Paste Device ID from another device</label>
-      <div style="display:flex;gap:8px;margin-top:6px">
-        <input type="text" id="syncCodeInput" placeholder="Paste ID here" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:DM Mono,monospace;font-size:12px;padding:10px 12px;outline:none">
-        <button id="applySyncBtn" style="background:var(--accent);border:none;border-radius:10px;color:var(--bg);font-family:'Bebas Neue',sans-serif;font-size:16px;padding:10px 16px;cursor:pointer">APPLY</button>
-      </div>
-      <p style="margin-top:8px;color:var(--warn);font-size:10px">Applying will switch this device to use the other device's data.</p>
+      <h3>YOUR ACCOUNT</h3>
+      <p>Sign in with this same account on your other devices to sync automatically.</p>
+      <p class="account-detail" id="accountEmail"></p>
+      <p class="account-detail">Account UID: <span id="accountUid"></span></p>
+      <button class="btn-action" id="accountSignOut">SIGN OUT</button>
+      <button class="btn-action muted" id="jsonBackupBtn">DOWNLOAD COMPLETE JSON BACKUP</button>
     </div>
     <div class="import-card">
       <h3 style="color:var(--muted)">EXPORT DATA</h3>
@@ -514,8 +544,8 @@
  
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getDatabase, ref, onValue, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signOut, reload, getIdToken } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
  
 // ─── CONFIG ────────────────────────────────────────────────────────────────
 const FB_CONFIG = {
@@ -552,7 +582,7 @@ let activeKey = '';          // YYYY-MM-DD — single source of truth for curren
 let editingId = null;
 let weekOffset = 0;
 let dataRef = null;
-let saveTimer = null;
+
 let currentTab = 'log';
  
 // ─── DATE UTILITIES ────────────────────────────────────────────────────────
@@ -680,107 +710,311 @@ function fmtTime(hhmm) {
 }
  
 // ─── FIREBASE ──────────────────────────────────────────────────────────────
-function getUserId() {
-  let id = localStorage.getItem('pickrate_uid');
-  if (!id) {
-    id = 'user_' + Math.random().toString(36).slice(2, 10);
-    localStorage.setItem('pickrate_uid', id);
-  }
-  return id;
+let auth, db;
+let stopDataSync = null, stopConnection = null;
+let sessionVersion = 0, sessionUid = null;
+let dataReady = false, connected = false, saving = false, saveFailed = false;
+let baseline = { days: {} }, latestSnapshot = null;
+let registering = false, authBusy = false;
+const el = id => document.getElementById(id);
+const clone = value => JSON.parse(JSON.stringify(value));
+
+// Firebase drops null children and empty containers. Compare their wire form,
+// independent of property order, to detect concurrent edits to the same day.
+function canonical(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== 'object') return value;
+  const result = {};
+  Object.keys(value).sort().forEach(key => {
+    const child = canonical(value[key]);
+    if (child !== null) result[key] = child;
+  });
+  return Object.keys(result).length ? result : null;
 }
- 
+const sameData = (a,b) => JSON.stringify(canonical(a)) === JSON.stringify(canonical(b));
+
 function setSyncStatus(status) {
-  document.getElementById('syncDot').className = 'sync-dot ' + status;
-  document.getElementById('syncLabel').textContent =
-    status === 'synced' ? 'SYNCED' :
-    status === 'syncing' ? 'SAVING' :
-    status === 'error' ? 'ERROR' : 'SYNC';
+  el('syncDot').className = 'sync-dot ' + status;
+  el('syncLabel').textContent = status === 'synced' ? 'SYNCED' :
+    status === 'syncing' ? 'SAVING' : status === 'error' ? 'ERROR' : 'OFFLINE';
 }
- 
-function saveData() {
-  setSyncStatus('syncing');
-  localStorage.setItem('pickrate_v3', JSON.stringify(appData));
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    if (!dataRef) { setSyncStatus('error'); return; }
-    set(dataRef, appData)
-      .then(() => setSyncStatus('synced'))
-      .catch(() => { setSyncStatus('error'); toast('Save failed — check connection'); });
-  }, 800);
+
+function downloadJson(data, label) {
+  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'pickrate-' + label + '-' + new Date().toISOString().replace(/[:.]/g,'-') + '.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
- 
-function startDatabaseSync(db, uid) {
-  dataRef = ref(db, 'users/' + uid);
-  document.getElementById('loadingMsg').textContent = 'Loading your data...';
- 
-  onValue(dataRef, (snapshot) => {
-    const data = snapshot.val();
-    appData = data || { days: {} };
+
+function updateSaveUI() {
+  el('mainApp').inert = !dataReady || !connected || saving || saveFailed;
+  el('saveNotice').hidden = !dataReady || (connected && !saving && !saveFailed);
+  el('saveMessage').textContent = saveFailed
+    ? 'This change was not saved. Download it before reloading. Another device may have changed the same day, or access was denied.'
+    : saving ? 'Saving to your account. Keep this page open until SYNCED.'
+    : 'Offline. Reconnect before editing. Your cloud data has not been replaced.';
+  el('downloadUnsaved').hidden = !saveFailed && !saving;
+  el('reloadSaved').hidden = !saveFailed;
+  setSyncStatus(saveFailed ? 'error' : saving ? 'syncing' : connected ? 'synced' : 'offline');
+}
+
+// Merge only changed days into the newest server record. Transactions preserve
+// other days and reject conflicting same-day edits instead of losing history.
+function mergeChanges(before, after, current) {
+  const result = clone(current || {});
+  const changedDays = [...new Set([...Object.keys(before.days || {}), ...Object.keys(after.days || {})])]
+    .filter(key => !sameData(before.days?.[key], after.days?.[key]));
+  for (const key of changedDays) {
+    if (!sameData(current?.days?.[key], before.days?.[key]) &&
+        !sameData(current?.days?.[key], after.days?.[key])) return undefined;
+  }
+  const fields = [...new Set([...Object.keys(before), ...Object.keys(after)])]
+    .filter(key => key !== 'days' && !sameData(before[key], after[key]));
+  for (const key of fields) {
+    if (!sameData(current?.[key], before[key]) && !sameData(current?.[key], after[key])) return undefined;
+  }
+  result.days = result.days || {};
+  for (const key of changedDays) {
+    if (after.days?.[key] === undefined) delete result.days[key];
+    else result.days[key] = clone(after.days[key]);
+  }
+  for (const key of fields) {
+    if (after[key] === undefined) delete result[key];
+    else result[key] = clone(after[key]);
+  }
+  return result;
+}
+
+async function saveData() {
+  if (!dataReady || !dataRef || !auth.currentUser?.emailVerified ||
+      auth.currentUser.uid !== sessionUid || saving || saveFailed || !connected) return;
+  const version = sessionVersion, target = dataRef;
+  const before = clone(baseline), after = clone(appData);
+  if (sameData(before, after)) return;
+  saving = true;
+  updateSaveUI();
+  try {
+    const result = await runTransaction(target, current => mergeChanges(before, after, current), {applyLocally:false});
+    if (version !== sessionVersion) return;
+    if (!result.committed) throw new Error('Concurrent edit');
+    const saved = result.snapshot.val() || {days:{}};
+    baseline = clone(saved);
+    appData = clone(saved);
     if (!appData.days) appData.days = {};
- 
-    const loading = document.getElementById('loadingScreen');
-    if (loading.style.display !== 'none') {
-      loading.style.display = 'none';
-      document.getElementById('mainApp').style.display = 'block';
-      // Show device ID
-      document.getElementById('syncCodeDisplay').textContent = uid;
-      // Set today as active date and render
-      setActiveDate(todayKey());
-      renderAll();
-    } else {
-      // Subsequent Firebase sync — re-render but don't reset the active date
-      renderAll();
-    }
-    setSyncStatus('synced');
-  }, (err) => {
-    console.error('Firebase error:', err);
-    setSyncStatus('error');
-    try { appData = JSON.parse(localStorage.getItem('pickrate_v3')) || { days: {} }; }
-    catch { appData = { days: {} }; }
-    document.getElementById('loadingScreen').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
-    document.getElementById('syncCodeDisplay').textContent = uid;
-    setActiveDate(todayKey());
     renderAll();
-    toast('Offline — using local data');
+  } catch (error) {
+    if (version !== sessionVersion) return;
+    saveFailed = true;
+  } finally {
+    if (version === sessionVersion) {
+      saving = false;
+      updateSaveUI();
+    }
+  }
+}
+
+function clearSession() {
+  sessionVersion++;
+  if (stopDataSync) stopDataSync();
+  if (stopConnection) stopConnection();
+  stopDataSync = stopConnection = null;
+  dataRef = null;
+  sessionUid = null;
+  dataReady = connected = saving = saveFailed = false;
+  appData = {days:{}};
+  baseline = {days:{}};
+  latestSnapshot = null;
+  editingId = pendingDeleteId = null;
+  weekOffset = 0;
+  el('mainApp').style.display = 'none';
+  el('mainApp').inert = true;
+  el('deleteModal').style.display = 'none';
+  el('saveNotice').hidden = true;
+  // Remove drafts and rendered private values before another account can enter.
+  document.querySelectorAll('#mainApp input, #mainApp textarea').forEach(input => { input.value = ''; });
+  el('accountEmail').textContent = el('accountUid').textContent = '';
+  setActiveDate(todayKey());
+  doCancelEdit();
+  clearZone();
+  switchTab('log');
+  renderAll();
+}
+
+function showAuth(message = '') {
+  el('loadingScreen').style.display = 'none';
+  el('authPanel').hidden = false;
+  el('authMessage').textContent = message;
+  const user = auth?.currentUser;
+  const signedIn = user && !user.isAnonymous;
+  el('authForm').hidden = !!signedIn;
+  el('verificationPanel').hidden = !signedIn || user.emailVerified;
+  el('authSignOut').hidden = !signedIn;
+  el('retryAccount').hidden = !signedIn || !user.emailVerified;
+  el('authTitle').textContent = signedIn ? (user.emailVerified ? 'ACCOUNT CONNECTION' : 'VERIFY YOUR EMAIL') : registering ? 'CREATE ACCOUNT' : 'SIGN IN';
+  el('verificationEmail').textContent = signedIn ? 'Open the verification link sent to ' + user.email + ', then continue here.' : '';
+}
+
+function authError(error) {
+  const messages = {
+    'auth/invalid-credential':'Email or password is incorrect.',
+    'auth/wrong-password':'Email or password is incorrect.',
+    'auth/user-not-found':'Email or password is incorrect.',
+    'auth/invalid-email':'Enter a valid email address.',
+    'auth/email-already-in-use':'This email already has an account. Sign in or reset your password.',
+    'auth/weak-password':'Choose a stronger password (at least 6 characters).',
+    'auth/password-does-not-meet-requirements':'Your password does not meet the project password policy.',
+    'auth/too-many-requests':'Too many attempts. Please wait before trying again.',
+    'auth/network-request-failed':'Cannot connect. Check your internet connection and retry.',
+    'auth/operation-not-allowed':'Email/password sign-in needs to be enabled in Firebase Console.',
+    'auth/user-disabled':'This account is disabled. Contact the app owner.'
+  };
+  return messages[error.code] || 'The request failed. Please try again. (' + (error.code || 'connection error') + ')';
+}
+
+async function enterAccount(user) {
+  clearSession();
+  const version = sessionVersion;
+  if (!user || user.isAnonymous) {
+    if (user?.isAnonymous) await signOut(auth);
+    showAuth();
+    return;
+  }
+  if (!user.emailVerified) { showAuth(); return; }
+  showAuth('Loading your account…');
+  try {
+    await getIdToken(user, true);
+    if (version !== sessionVersion || auth.currentUser?.uid !== user.uid) return;
+    sessionUid = user.uid;
+    dataRef = ref(db, 'users/' + user.uid);
+    stopConnection = onValue(ref(db, '.info/connected'), snapshot => {
+      if (version !== sessionVersion) return;
+      connected = snapshot.val() === true;
+      updateSaveUI();
+    });
+    stopDataSync = onValue(dataRef, snapshot => {
+      if (version !== sessionVersion) return;
+      latestSnapshot = snapshot.val() || {days:{}};
+      if (saving || saveFailed) return;
+      baseline = clone(latestSnapshot);
+      appData = clone(latestSnapshot);
+      if (!appData.days) appData.days = {};
+      dataReady = true;
+      el('authPanel').hidden = true;
+      el('loadingScreen').style.display = 'none';
+      el('mainApp').style.display = 'block';
+      el('accountEmail').textContent = user.email;
+      el('accountUid').textContent = user.uid;
+      renderAll();
+      updateSaveUI();
+    }, () => {
+      if (version !== sessionVersion) return;
+      if (saving || saveFailed) { saveFailed = true; updateSaveUI(); return; }
+      clearSession();
+      showAuth('Cannot read your account. Check the published database rules and email verification, then retry.');
+    });
+  } catch (error) {
+    if (version === sessionVersion) showAuth(authError(error));
+  }
+}
+
+async function authAction(action) {
+  if (authBusy) return;
+  authBusy = true;
+  document.querySelectorAll('#authPanel button').forEach(button => { button.disabled = true; });
+  el('authMessage').textContent = '';
+  try { await action(); }
+  catch (error) { el('authMessage').textContent = authError(error); }
+  finally {
+    authBusy = false;
+    document.querySelectorAll('#authPanel button').forEach(button => { button.disabled = false; });
+  }
+}
+
+async function leaveAccount() {
+  if (saving || saveFailed) { toast('Resolve the unsaved change first'); return; }
+  try {
+    await signOut(auth);
+    clearSession();
+    showAuth();
+  } catch (error) { toast(authError(error)); }
+}
+
+function wireAuthEvents() {
+  el('authToggle').addEventListener('click', () => {
+    registering = !registering;
+    el('confirmGroup').hidden = !registering;
+    el('authConfirm').required = registering;
+    el('authPassword').autocomplete = registering ? 'new-password' : 'current-password';
+    el('authSubmit').textContent = registering ? 'CREATE ACCOUNT' : 'SIGN IN';
+    el('authToggle').textContent = registering ? 'ALREADY HAVE AN ACCOUNT? SIGN IN' : 'CREATE AN ACCOUNT';
+    showAuth();
+  });
+  el('authForm').addEventListener('submit', event => {
+    event.preventDefault();
+    const email = el('authEmail').value.trim(), password = el('authPassword').value;
+    if (registering && password !== el('authConfirm').value) {
+      el('authMessage').textContent = 'Passwords do not match.'; return;
+    }
+    authAction(async () => {
+      if (registering) {
+        const credential = await createUserWithEmailAndPassword(auth, email, password);
+        try {
+          await sendEmailVerification(credential.user);
+          showAuth('Verification email sent. Check your inbox and spam folder.');
+        } catch (error) {
+          showAuth('Account created. Verification email was not sent. Use RESEND. ' + authError(error));
+        }
+      } else await signInWithEmailAndPassword(auth, email, password);
+      el('authPassword').value = el('authConfirm').value = '';
+    });
+  });
+  el('resetPassword').addEventListener('click', () => {
+    if (!el('authEmail').reportValidity()) return;
+    authAction(async () => {
+      try { await sendPasswordResetEmail(auth, el('authEmail').value.trim()); }
+      catch (error) { if (error.code !== 'auth/user-not-found') throw error; }
+      el('authMessage').textContent = 'If this email has an account, a password reset link has been sent. Check spam too.';
+    });
+  });
+  el('resendVerification').addEventListener('click', () => authAction(async () => {
+    await sendEmailVerification(auth.currentUser);
+    showAuth('Verification email sent. Check your inbox and spam folder.');
+  }));
+  const refreshAccount = () => authAction(async () => {
+    const user = auth.currentUser;
+    if (!user) { showAuth(); return; }
+    await reload(user);
+    if (auth.currentUser?.uid !== user.uid) return;
+    if (!user.emailVerified) { showAuth('Your email is not verified yet. Open the link, then try again.'); return; }
+    await enterAccount(user);
+  });
+  el('checkVerification').addEventListener('click', refreshAccount);
+  el('retryAccount').addEventListener('click', refreshAccount);
+  el('authSignOut').addEventListener('click', leaveAccount);
+  el('accountSignOut').addEventListener('click', leaveAccount);
+  el('jsonBackupBtn').addEventListener('click', () => downloadJson(appData, 'account-backup'));
+  el('downloadUnsaved').addEventListener('click', () => downloadJson(appData, 'unsaved'));
+  el('reloadSaved').addEventListener('click', () => {
+    if (confirm('Download the unsaved JSON backup first. Discard the unsaved change and reload the cloud copy?')) enterAccount(auth.currentUser);
+  });
+  window.addEventListener('beforeunload', event => {
+    if (saving || saveFailed) { event.preventDefault(); event.returnValue = ''; }
   });
 }
- 
+
 function initFirebase() {
   try {
     const app = initializeApp(FB_CONFIG);
-    const db = getDatabase(app);
-    const auth = getAuth(app);
-    const uid = getUserId(); // your existing per-device ID — unchanged, still used as the data path key
- 
-    document.getElementById('loadingMsg').textContent = 'Signing in...';
- 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // Anonymous auth session established — safe to read/write per the database rules
-        startDatabaseSync(db, uid);
-      } else {
-        signInAnonymously(auth).catch((err) => {
-          console.error('Anonymous sign-in failed:', err);
-          setSyncStatus('error');
-          try { appData = JSON.parse(localStorage.getItem('pickrate_v3')) || { days: {} }; }
-          catch { appData = { days: {} }; }
-          document.getElementById('loadingScreen').style.display = 'none';
-          document.getElementById('mainApp').style.display = 'block';
-          document.getElementById('syncCodeDisplay').textContent = uid;
-          setActiveDate(todayKey());
-          renderAll();
-          toast('Offline — using local data');
-        });
-      }
-    });
-  } catch (e) {
-    console.error(e);
-    document.getElementById('loadingMsg').textContent = 'Firebase config error';
-    setSyncStatus('error');
-  }
+    db = getDatabase(app);
+    auth = getAuth(app);
+    onAuthStateChanged(auth, user => {
+      enterAccount(user).catch(error => showAuth(authError(error)));
+    }, error => { clearSession(); showAuth(authError(error)); });
+  } catch (error) { showAuth(authError(error)); }
 }
- 
+
 // ─── TOAST ────────────────────────────────────────────────────────────────
 function toast(msg) {
   const el = document.getElementById('toast');
@@ -2126,21 +2360,6 @@ function wireEvents() {
   document.getElementById('importBtn').addEventListener('click', doImport);
   document.getElementById('exportBtn').addEventListener('click', doExport);
  
-  // Sync
-  document.getElementById('copyDeviceIdBtn').addEventListener('click', () => {
-    const uid = getUserId();
-    navigator.clipboard.writeText(uid).then(() => toast('Device ID copied!'))
-      .catch(() => { document.getElementById('syncCodeInput').value = uid; toast('ID pasted into field below'); });
-  });
-  document.getElementById('applySyncBtn').addEventListener('click', () => {
-    const input = document.getElementById('syncCodeInput').value.trim();
-    if (!input.startsWith('user_') || input.length < 10) { toast('Invalid Device ID'); return; }
-    if (!confirm('Switch to other device\'s data?')) return;
-    localStorage.setItem('pickrate_uid', input);
-    toast('Switching — reloading...');
-    setTimeout(() => location.reload(), 1000);
-  });
- 
   // Delete modal
   document.getElementById('deleteCancelBtn').addEventListener('click', () => {
     pendingDeleteId = null;
@@ -2167,18 +2386,20 @@ function wireEvents() {
  
   // Clear all
   document.getElementById('clearAllBtn').addEventListener('click', () => {
-    if (!confirm('Clear ALL data from cloud? Cannot be undone.')) return;
+    if (!confirm('Download a complete backup, then clear ALL data in this account?')) return;
+    downloadJson(appData, 'before-clear');
     appData = { days: {} };
-    if (dataRef) set(dataRef, appData);
     saveData();
     renderAll();
-    toast('All data cleared');
+    toast('Clearing — wait for SYNCED');
   });
 }
  
 // ─── BOOT ─────────────────────────────────────────────────────────────────
 wireEvents();
+wireAuthEvents();
 initFirebase();
 </script>
 </body>
 </html>
+ 
