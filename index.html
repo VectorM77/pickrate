@@ -1,3 +1,4 @@
+<!-- No regrets, that's my motto.  That, and everybody Wang Chung tonight. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -264,6 +265,40 @@
   .auth-message { color: var(--accent); margin: 12px 0; }
   button:disabled { opacity: .5; cursor: wait; }
   #saveNotice { position: fixed; z-index: 210; bottom: 12px; left: 50%; transform: translateX(-50%); width: min(440px, 95vw); background: var(--surface); border: 1px solid var(--warn); border-radius: 12px; padding: 12px; font-size: 13px; }
+
+  /* Desktop enhancements; the original phone layout remains the default. */
+  @media (min-width: 1000px) {
+    .app { max-width: 1440px; width: calc(100% - 64px); padding-bottom: 64px; }
+    .header { position: relative; padding: 24px 24px 16px; }
+    .date-strip { top: 0; padding: 10px 24px; }
+    .date-display { flex: 0 1 320px; }
+    .tabs { top: 55px; padding: 0 24px; }
+    .tab { font-size: 12px; padding: 16px 8px; }
+    .section { padding: 24px; }
+    .section > *, .desktop-orders { min-width: 0; }
+    #tab-log.active { display: grid; grid-template-columns: minmax(320px, 380px) minmax(0, 1fr); gap: 24px; align-items: start; }
+    #tab-log > .form-card { margin-bottom: 0; }
+    .form-card, .import-card, .chart-wrap { padding: 20px; }
+    .order-item { padding: 14px 16px; }
+    .order-actions { flex-direction: row; gap: 8px; }
+    .icon-btn { padding: 8px; }
+    #tab-summary.active, #tab-stats.active, #tab-import.active { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+    #tab-summary > *, #tab-stats > *, #tab-import > * { margin-bottom: 0; }
+    #tab-summary > .notes-row, #verdictBanner, #tab-summary > .summary-grid, #zoneSummaryWrap { grid-column: 1 / -1; }
+    #tab-summary > .hours-row { margin-top: 0 !important; }
+    .summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+    #overallCard { grid-column: 1 / -1; }
+    #tab-stats > .stats-header-card, #tab-stats > .chart-wrap:last-child { grid-column: 1 / -1; }
+    .stats-header-card { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+    #calendarGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+    #historyView, #weekView { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    #historyView > *, #weekView > * { margin: 0 !important; }
+    #historyView > .empty-state, #weekView > .stat-card { grid-column: 1 / -1; }
+    #tab-import > .import-card:first-child { grid-row: span 2; }
+    #clearAllBtn { width: auto; padding-left: 24px; padding-right: 24px; }
+    .week-nav-label, .hist-meta, .week-meta { font-size: 12px; }
+  }
+
 </style>
 </head>
 <body>
@@ -383,6 +418,7 @@
       <button class="btn-log dimmed" id="logBtn">LOG ORDER</button>
       <button class="btn-cancel" id="cancelBtn" style="display:none">CANCEL EDIT</button>
     </div>
+    <div class="desktop-orders">
     <div class="section-title">
       <span>ORDERS — <span id="orderListDateLabel" style="color:var(--accent)"></span></span>
       <button class="wrong-date-btn" id="wrongDateBtn">WRONG DATE?</button>
@@ -396,6 +432,7 @@
       </div>
     </div>
     <div class="order-list" id="orderList"></div>
+    </div>
   </div>
  
   <!-- SUMMARY -->
@@ -2395,6 +2432,16 @@ function wireEvents() {
   });
 }
  
+let chartResizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(chartResizeTimer);
+  chartResizeTimer = setTimeout(() => {
+    if (!dataReady) return;
+    if (currentTab === 'summary') renderCharts(getDay(activeKey).orders);
+    if (currentTab === 'stats') { renderTrendChart(); renderDowChart(); }
+  }, 150);
+});
+
 // ─── BOOT ─────────────────────────────────────────────────────────────────
 wireEvents();
 wireAuthEvents();
