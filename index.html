@@ -266,6 +266,10 @@
   .remember-row input { width:auto; accent-color:var(--accent); }
   .onboarding-copy { font-family:'DM Mono',monospace; font-size:12px; line-height:1.7; color:var(--muted); }
   .onboarding-copy strong { color:var(--text); }
+  .privacy-copy { font-family:'DM Mono',monospace; font-size:11px; line-height:1.7; color:var(--muted); }
+  .privacy-copy p { margin:0 0 10px; }
+  .privacy-copy strong { color:var(--text); }
+  .privacy-badge { display:inline-block; margin-bottom:10px; padding:3px 8px; border:1px solid rgba(0,255,136,.3); border-radius:10px; color:var(--accent2); background:rgba(0,255,136,.08); font-size:9px; letter-spacing:.5px; }
   .user-identity { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted); margin: 3px 0 9px; display: flex; gap: 9px; align-items: center; flex-wrap: wrap; cursor: pointer; width: fit-content; max-width: 100%; }
   .user-identity:hover .user-name { color: var(--accent); }
   .user-identity .user-name { color: var(--text); font-weight: 700; transition: color .2s; font-size: 15px; }
@@ -344,7 +348,7 @@
       <div class="input-group" id="confirmGroup" hidden><label for="authConfirm">Confirm password</label><input id="authConfirm" type="password" autocomplete="new-password"></div>
       <button class="btn-log" id="authSubmit" type="submit">SIGN IN</button>
       <button class="btn-action" id="authToggle" type="button">CREATE AN ACCOUNT</button>
-      <button class="btn-cancel" id="resetPassword" type="button">SEND PASSWORD RESET EMAIL</button>
+      <button class="btn-cancel" id="resetPassword" type="button">FORGOT PASSWORD?</button>
     </form>
     <div id="verificationPanel" hidden>
       <p id="verificationEmail"></p>
@@ -624,7 +628,40 @@
     </div>
     <div class="account-modal-actions">
       <button class="btn-action" id="saveProfileBtn">SAVE PROFILE</button>
+      <button class="btn-cancel" id="aboutPrivacyBtn" type="button">ABOUT &amp; PRIVACY</button>
       <button class="btn-cancel" id="accountModalClose" type="button">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="passwordResetModal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="passwordResetTitle">
+  <div class="modal-box">
+    <div class="modal-title account-modal-title" id="passwordResetTitle">RESET PASSWORD</div>
+    <p class="account-modal-meta">Enter the recovery email for your PickRate account. Firebase will email you a secure password-reset link.</p>
+    <div class="input-group">
+      <label for="resetEmail">Recovery Email</label>
+      <input id="resetEmail" type="email" autocomplete="email" placeholder="you@example.com">
+    </div>
+    <p class="auth-message" id="resetMessage" role="status" aria-live="polite"></p>
+    <div class="account-modal-actions">
+      <button class="btn-action" id="sendResetBtn" type="button">SEND RESET LINK</button>
+      <button class="btn-cancel" id="passwordResetClose" type="button">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="privacyModal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
+  <div class="modal-box">
+    <div class="modal-title account-modal-title" id="privacyTitle">ABOUT &amp; PRIVACY</div>
+    <div class="privacy-copy">
+      <span class="privacy-badge">PRIVATE ACCOUNT DATA</span>
+      <p><strong>Your PickRate history is tied to your signed-in account.</strong> Database access is restricted to the matching authenticated user ID.</p>
+      <p>Your <strong>name and Associate ID</strong> are part of your private PickRate profile. They are shown to you in the app and are not intended as a public user directory.</p>
+      <p>Your <strong>email address</strong> is used for Firebase sign-in, email verification, and password recovery. PickRate does not store your password.</p>
+      <p>If you use <strong>Remember my email</strong>, only the email address is saved in this browser's local storage. Your password is never saved there by PickRate.</p>
+    </div>
+    <div class="account-modal-actions">
+      <button class="btn-action" id="privacyClose" type="button">DONE</button>
     </div>
   </div>
 </div>
@@ -849,6 +886,8 @@ function closeOnboarding() {
   const user = auth?.currentUser;
   if (user) markOnboardingSeen(user.uid);
   el('onboardingModal').style.display = 'none';
+  el('passwordResetModal').style.display = 'none';
+  el('privacyModal').style.display = 'none';
 }
 
 // Firebase drops null children and empty containers. Compare their wire form,
@@ -1159,6 +1198,24 @@ async function leaveAccount() {
   } catch (error) { toast(authError(error)); }
 }
 
+function openPasswordResetModal() {
+  const currentEmail = auth?.currentUser?.email || el('authEmail').value.trim() || '';
+  el('resetEmail').value = currentEmail;
+  el('resetMessage').textContent = '';
+  el('passwordResetModal').style.display = 'flex';
+  setTimeout(() => el('resetEmail').focus(), 50);
+}
+function closePasswordResetModal() {
+  el('passwordResetModal').style.display = 'none';
+  el('resetMessage').textContent = '';
+}
+function openPrivacyModal() {
+  el('privacyModal').style.display = 'flex';
+}
+function closePrivacyModal() {
+  el('privacyModal').style.display = 'none';
+}
+
 function wireAuthEvents() {
   el('authToggle').addEventListener('click', () => {
     registering = !registering;
@@ -1206,13 +1263,38 @@ function wireAuthEvents() {
       el('authAssociateId').value = '';
     });
   });
-  el('resetPassword').addEventListener('click', () => {
-    if (!el('authEmail').reportValidity()) return;
-    authAction(async () => {
-      try { await sendPasswordResetEmail(auth, el('authEmail').value.trim()); }
-      catch (error) { if (error.code !== 'auth/user-not-found') throw error; }
-      el('authMessage').textContent = 'If this email has an account, a password reset link has been sent. Check spam too.';
-    });
+  el('resetPassword').addEventListener('click', openPasswordResetModal);
+  el('sendResetBtn').addEventListener('click', () => {
+    const email = el('resetEmail').value.trim();
+    if (!email) {
+      el('resetMessage').textContent = 'Enter your recovery email.';
+      el('resetEmail').focus();
+      return;
+    }
+    if (!el('resetEmail').checkValidity()) {
+      el('resetMessage').textContent = 'Enter a valid email address.';
+      el('resetEmail').focus();
+      return;
+    }
+    el('sendResetBtn').disabled = true;
+    el('resetMessage').textContent = 'Sending reset link…';
+    sendPasswordResetEmail(auth, email)
+      .catch(error => {
+        if (error.code !== 'auth/user-not-found') throw error;
+      })
+      .then(() => {
+        el('resetMessage').textContent = 'If this email has a PickRate account, a reset link has been sent. Check your inbox and spam folder.';
+      })
+      .catch(error => {
+        el('resetMessage').textContent = authError(error);
+      })
+      .finally(() => {
+        el('sendResetBtn').disabled = false;
+      });
+  });
+  el('passwordResetClose').addEventListener('click', closePasswordResetModal);
+  el('passwordResetModal').addEventListener('click', event => {
+    if (event.target === el('passwordResetModal')) closePasswordResetModal();
   });
   el('resendVerification').addEventListener('click', () => authAction(async () => {
     await sendEmailVerification(auth.currentUser);
@@ -1230,6 +1312,9 @@ function wireAuthEvents() {
   el('retryAccount').addEventListener('click', refreshAccount);
   el('authSignOut').addEventListener('click', leaveAccount);
   el('onboardingDone').addEventListener('click', closeOnboarding);
+  el('aboutPrivacyBtn').addEventListener('click', () => { closeAccountModal(); openPrivacyModal(); });
+  el('privacyClose').addEventListener('click', closePrivacyModal);
+  el('privacyModal').addEventListener('click', event => { if (event.target === el('privacyModal')) closePrivacyModal(); });
   el('onboardingModal').addEventListener('click', event => { if (event.target === el('onboardingModal')) closeOnboarding(); });
   el('accountBtn').addEventListener('click', openAccountModal);
   el('userIdentity').addEventListener('click', openAccountModal);
@@ -1238,7 +1323,9 @@ function wireAuthEvents() {
   el('accountModal').addEventListener('click', event => { if (event.target === el('accountModal')) closeAccountModal(); });
   document.addEventListener('keydown', event => {
     if (event.key !== 'Escape') return;
-    if (el('onboardingModal').style.display !== 'none') closeOnboarding();
+    if (el('passwordResetModal').style.display !== 'none') closePasswordResetModal();
+    else if (el('privacyModal').style.display !== 'none') closePrivacyModal();
+    else if (el('onboardingModal').style.display !== 'none') closeOnboarding();
     else if (el('accountModal').style.display !== 'none') closeAccountModal();
   });
   el('accountSignOut').addEventListener('click', leaveAccount);
