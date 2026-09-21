@@ -262,10 +262,10 @@
   .auth-panel .input-group { margin: 14px 0; }
   .auth-panel input { font-size: 16px; }
   .profile-signup-fields { margin-top: 4px; }
-  .user-identity { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin: 2px 0 7px; display: flex; gap: 7px; align-items: center; flex-wrap: wrap; cursor: pointer; width: fit-content; max-width: 100%; }
+  .user-identity { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted); margin: 3px 0 9px; display: flex; gap: 9px; align-items: center; flex-wrap: wrap; cursor: pointer; width: fit-content; max-width: 100%; }
   .user-identity:hover .user-name { color: var(--accent); }
-  .user-identity .user-name { color: var(--text); font-weight: 500; transition: color .2s; }
-  .user-identity .user-id { color: var(--accent); }
+  .user-identity .user-name { color: var(--text); font-weight: 700; transition: color .2s; font-size: 15px; }
+  .user-identity .user-id { color: var(--accent); font-size: 13px; font-weight: 500; }
   .account-btn { background: rgba(0,212,255,0.08); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .6px; padding: 5px 8px; cursor: pointer; transition: all .2s; }
   .account-btn:hover, .account-btn.needs-profile { border-color: var(--accent); color: var(--accent); }
   .account-btn.needs-profile { background: rgba(0,212,255,0.12); }
@@ -971,7 +971,7 @@ function renderAccountProfile() {
   const complete = !!(profile.name && profile.associateId);
   if (complete) {
     el('headerUserName').textContent = profile.name;
-    el('headerAssociateId').textContent = 'ID ' + profile.associateId;
+    el('headerAssociateId').textContent = 'Associate ID ' + profile.associateId;
     el('userIdentity').hidden = false;
     el('accountBtn').textContent = 'ACCOUNT';
     el('accountBtn').classList.remove('needs-profile');
