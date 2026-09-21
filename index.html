@@ -262,12 +262,19 @@
   .auth-panel .input-group { margin: 14px 0; }
   .auth-panel input { font-size: 16px; }
   .profile-signup-fields { margin-top: 4px; }
-  .user-identity { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin: 2px 0 7px; display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
-  .user-identity .user-name { color: var(--text); font-weight: 500; }
+  .user-identity { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin: 2px 0 7px; display: flex; gap: 7px; align-items: center; flex-wrap: wrap; cursor: pointer; width: fit-content; max-width: 100%; }
+  .user-identity:hover .user-name { color: var(--accent); }
+  .user-identity .user-name { color: var(--text); font-weight: 500; transition: color .2s; }
   .user-identity .user-id { color: var(--accent); }
+  .account-btn { background: rgba(0,212,255,0.08); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .6px; padding: 5px 8px; cursor: pointer; transition: all .2s; }
+  .account-btn:hover, .account-btn.needs-profile { border-color: var(--accent); color: var(--accent); }
+  .account-btn.needs-profile { background: rgba(0,212,255,0.12); }
   .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0 2px; }
   .profile-grid .input-group { margin: 0; }
   .profile-grid input { font-size: 14px; }
+  .account-modal-title { color: var(--accent); }
+  .account-modal-meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.6; margin: 4px 0 12px; overflow-wrap: anywhere; }
+  .account-modal-actions { display: grid; gap: 8px; margin-top: 12px; }
   @media (max-width: 520px) { .profile-grid { grid-template-columns: 1fr; } }
   .auth-message { color: var(--accent); margin: 12px 0; }
   button:disabled { opacity: .5; cursor: wait; }
@@ -356,6 +363,7 @@
     <div class="header-top">
       <div class="logo">PICKRATE</div>
       <div class="header-right">
+        <button class="account-btn" id="accountBtn" type="button">ACCOUNT</button>
         <span class="sync-label" id="syncLabel">SYNC</span>
         <span class="sync-dot" id="syncDot"></span>
       </div>
@@ -521,15 +529,11 @@
       <button class="btn-action" id="importBtn">IMPORT DATA</button>
     </div>
     <div class="import-card" style="border-color:var(--accent)">
-      <h3>YOUR ACCOUNT</h3>
-      <p>Sign in with this same account on your other devices to sync automatically.</p>
+      <h3>ACCOUNT & BACKUP</h3>
+      <p>Your profile is available anytime from the <strong style="color:var(--text)">ACCOUNT</strong> button at the top of PickRate.</p>
       <p class="account-detail" id="accountEmail"></p>
       <p class="account-detail">Account UID: <span id="accountUid"></span></p>
-      <div class="profile-grid">
-        <div class="input-group"><label for="profileName">Name</label><input id="profileName" type="text" autocomplete="name" maxlength="80" placeholder="Your name"></div>
-        <div class="input-group"><label for="profileAssociateId">Associate ID</label><input id="profileAssociateId" type="text" autocomplete="off" maxlength="40" placeholder="Associate ID" spellcheck="false"></div>
-      </div>
-      <button class="btn-action" id="saveProfileBtn">SAVE PROFILE</button>
+      <button class="btn-action" id="manageProfileBtn">MANAGE PROFILE</button>
       <button class="btn-action" id="accountSignOut">SIGN OUT</button>
       <button class="btn-action muted" id="jsonBackupBtn">DOWNLOAD COMPLETE JSON BACKUP</button>
     </div>
@@ -589,6 +593,22 @@
  
 </div>
 <div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="accountModal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle">
+  <div class="modal-box">
+    <div class="modal-title account-modal-title" id="accountModalTitle">YOUR PROFILE</div>
+    <div class="account-modal-meta" id="accountModalEmail"></div>
+    <div class="profile-grid">
+      <div class="input-group"><label for="profileName">Name</label><input id="profileName" type="text" autocomplete="name" maxlength="80" placeholder="Your name"></div>
+      <div class="input-group"><label for="profileAssociateId">Associate ID</label><input id="profileAssociateId" type="text" autocomplete="off" maxlength="40" placeholder="Associate ID" spellcheck="false"></div>
+    </div>
+    <div class="account-modal-actions">
+      <button class="btn-action" id="saveProfileBtn">SAVE PROFILE</button>
+      <button class="btn-cancel" id="accountModalClose" type="button">CLOSE</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="deleteModal" style="display:none">
   <div class="modal-box">
     <div class="modal-title">DELETE ORDER?</div>
@@ -889,12 +909,16 @@ function clearSession() {
   el('mainApp').style.display = 'none';
   el('mainApp').inert = true;
   el('deleteModal').style.display = 'none';
+  el('accountModal').style.display = 'none';
   el('saveNotice').hidden = true;
   // Remove drafts and rendered private values before another account can enter.
   document.querySelectorAll('#mainApp input, #mainApp textarea').forEach(input => { input.value = ''; });
   el('accountEmail').textContent = el('accountUid').textContent = '';
   el('profileName').value = el('profileAssociateId').value = '';
+  el('accountModalEmail').textContent = '';
   el('headerUserName').textContent = el('headerAssociateId').textContent = '';
+  el('accountBtn').textContent = 'ACCOUNT';
+  el('accountBtn').classList.remove('needs-profile');
   el('userIdentity').hidden = true;
   setActiveDate(todayKey());
   doCancelEdit();
@@ -944,14 +968,31 @@ function renderAccountProfile() {
   const profile = cleanProfile(appData.profile);
   el('profileName').value = profile.name;
   el('profileAssociateId').value = profile.associateId;
-  if (profile.name && profile.associateId) {
+  const complete = !!(profile.name && profile.associateId);
+  if (complete) {
     el('headerUserName').textContent = profile.name;
-    el('headerAssociateId').textContent = 'Associate ID: ' + profile.associateId;
+    el('headerAssociateId').textContent = 'ID ' + profile.associateId;
     el('userIdentity').hidden = false;
+    el('accountBtn').textContent = 'ACCOUNT';
+    el('accountBtn').classList.remove('needs-profile');
   } else {
     el('headerUserName').textContent = el('headerAssociateId').textContent = '';
     el('userIdentity').hidden = true;
+    el('accountBtn').textContent = 'SET UP PROFILE';
+    el('accountBtn').classList.add('needs-profile');
   }
+}
+
+function openAccountModal() {
+  if (!auth.currentUser) return;
+  renderAccountProfile();
+  el('accountModalEmail').textContent = 'Recovery email: ' + (auth.currentUser.email || '—');
+  el('accountModal').style.display = 'flex';
+  setTimeout(() => el('profileName').focus(), 0);
+}
+
+function closeAccountModal() {
+  el('accountModal').style.display = 'none';
 }
 
 function pendingProfileKey(uid) { return 'pickratePendingProfile:' + uid; }
@@ -1122,6 +1163,12 @@ function wireAuthEvents() {
   el('checkVerification').addEventListener('click', refreshAccount);
   el('retryAccount').addEventListener('click', refreshAccount);
   el('authSignOut').addEventListener('click', leaveAccount);
+  el('accountBtn').addEventListener('click', openAccountModal);
+  el('userIdentity').addEventListener('click', openAccountModal);
+  el('manageProfileBtn').addEventListener('click', openAccountModal);
+  el('accountModalClose').addEventListener('click', closeAccountModal);
+  el('accountModal').addEventListener('click', event => { if (event.target === el('accountModal')) closeAccountModal(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && el('accountModal').style.display !== 'none') closeAccountModal(); });
   el('accountSignOut').addEventListener('click', leaveAccount);
   el('saveProfileBtn').addEventListener('click', async () => {
     if (!dataReady || !auth.currentUser) return;
@@ -1130,7 +1177,10 @@ function wireAuthEvents() {
     appData.profile = profile;
     renderAccountProfile();
     await saveData();
-    if (!saveFailed) toast('Profile saved');
+    if (!saveFailed) {
+      toast('Profile saved');
+      closeAccountModal();
+    }
   });
   el('jsonBackupBtn').addEventListener('click', () => downloadJson(appData, 'account-backup'));
   el('downloadUnsaved').addEventListener('click', () => downloadJson(appData, 'unsaved'));
