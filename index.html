@@ -274,9 +274,9 @@
   .user-identity:hover .user-name { color: var(--accent); }
   .user-identity .user-name { color: var(--text); font-weight: 700; transition: color .2s; font-size: 15px; }
   .user-identity .user-id { color: var(--accent); font-size: 13px; font-weight: 500; }
-  .account-btn { background: rgba(0,212,255,0.08); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .6px; padding: 5px 8px; cursor: pointer; transition: all .2s; }
-  .account-btn:hover, .account-btn.needs-profile { border-color: var(--accent); color: var(--accent); }
-  .account-btn.needs-profile { background: rgba(0,212,255,0.12); }
+  .account-btn { background: rgba(0,212,255,0.14); border: 1px solid var(--accent); border-radius: 9px; color: var(--accent); font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 700; letter-spacing: .7px; padding: 7px 11px; cursor: pointer; transition: all .2s; box-shadow: 0 0 12px rgba(0,212,255,0.12); }
+  .account-btn:hover, .account-btn:focus-visible { background: rgba(0,212,255,0.22); box-shadow: 0 0 18px rgba(0,212,255,0.22); outline: none; }
+  .account-btn.needs-profile { background: rgba(0,212,255,0.22); border-color: var(--accent2); color: var(--accent2); box-shadow: 0 0 16px rgba(0,255,136,0.18); }
   .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0 2px; }
   .profile-grid .input-group { margin: 0; }
   .profile-grid input { font-size: 14px; }
@@ -372,7 +372,7 @@
     <div class="header-top">
       <div class="logo">PICKRATE</div>
       <div class="header-right">
-        <button class="account-btn" id="accountBtn" type="button">ACCOUNT</button>
+        <button class="account-btn" id="accountBtn" type="button">MY ACCOUNT</button>
         <span class="sync-label" id="syncLabel">SYNC</span>
         <span class="sync-dot" id="syncDot"></span>
       </div>
@@ -656,7 +656,7 @@
     <div class="privacy-copy">
       <span class="privacy-badge">PRIVATE ACCOUNT DATA</span>
       <p><strong>Your PickRate history is tied to your signed-in account.</strong> Database access is restricted to the matching authenticated user ID.</p>
-      <p>Your <strong>name and Associate ID</strong> are part of your private PickRate profile. They are shown to you in the app and are not intended as a public user directory.</p>
+      <p>Your <strong>Name and Associate ID</strong> are part of your private PickRate profile. They are shown to you in the app and are not intended as a public user directory.</p>
       <p>Your <strong>email address</strong> is used for Firebase sign-in, email verification, and password recovery. PickRate does not store your password.</p>
       <p>If you use <strong>Remember my email</strong>, only the email address is saved in this browser's local storage. Your password is never saved there by PickRate.</p>
     </div>
