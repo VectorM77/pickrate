@@ -4,13 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Pick Rate Tracker</title>
-<meta name="theme-color" content="#0a0e1a">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PickRate">
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -268,6 +261,14 @@
   .auth-panel p, .account-detail { font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
   .auth-panel .input-group { margin: 14px 0; }
   .auth-panel input { font-size: 16px; }
+  .profile-signup-fields { margin-top: 4px; }
+  .user-identity { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin: 2px 0 7px; display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+  .user-identity .user-name { color: var(--text); font-weight: 500; }
+  .user-identity .user-id { color: var(--accent); }
+  .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0 2px; }
+  .profile-grid .input-group { margin: 0; }
+  .profile-grid input { font-size: 14px; }
+  @media (max-width: 520px) { .profile-grid { grid-template-columns: 1fr; } }
   .auth-message { color: var(--accent); margin: 12px 0; }
   button:disabled { opacity: .5; cursor: wait; }
   #saveNotice { position: fixed; z-index: 210; bottom: 12px; left: 50%; transform: translateX(-50%); width: min(440px, 95vw); background: var(--surface); border: 1px solid var(--warn); border-radius: 12px; padding: 12px; font-size: 13px; }
@@ -322,6 +323,10 @@
     <h3 id="authTitle">SIGN IN</h3>
     <p>Sign in to sync your private PickRate history across devices.</p>
     <form id="authForm">
+      <div class="profile-signup-fields" id="profileSignupFields" hidden>
+        <div class="input-group"><label for="authName">Name</label><input id="authName" type="text" autocomplete="name" maxlength="80"></div>
+        <div class="input-group"><label for="authAssociateId">Associate ID</label><input id="authAssociateId" type="text" autocomplete="off" maxlength="40" spellcheck="false"></div>
+      </div>
       <div class="input-group"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="username" required></div>
       <div class="input-group"><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" required minlength="6"></div>
       <div class="input-group" id="confirmGroup" hidden><label for="authConfirm">Confirm password</label><input id="authConfirm" type="password" autocomplete="new-password"></div>
@@ -354,6 +359,11 @@
         <span class="sync-label" id="syncLabel">SYNC</span>
         <span class="sync-dot" id="syncDot"></span>
       </div>
+    </div>
+    <div class="user-identity" id="userIdentity" hidden>
+      <span class="user-name" id="headerUserName"></span>
+      <span>•</span>
+      <span class="user-id" id="headerAssociateId"></span>
     </div>
     <div class="rate-label-row">
       <div><span class="rate-big" id="liveRate">—</span><span class="rate-unit">u/hr</span></div>
@@ -515,6 +525,11 @@
       <p>Sign in with this same account on your other devices to sync automatically.</p>
       <p class="account-detail" id="accountEmail"></p>
       <p class="account-detail">Account UID: <span id="accountUid"></span></p>
+      <div class="profile-grid">
+        <div class="input-group"><label for="profileName">Name</label><input id="profileName" type="text" autocomplete="name" maxlength="80" placeholder="Your name"></div>
+        <div class="input-group"><label for="profileAssociateId">Associate ID</label><input id="profileAssociateId" type="text" autocomplete="off" maxlength="40" placeholder="Associate ID" spellcheck="false"></div>
+      </div>
+      <button class="btn-action" id="saveProfileBtn">SAVE PROFILE</button>
       <button class="btn-action" id="accountSignOut">SIGN OUT</button>
       <button class="btn-action muted" id="jsonBackupBtn">DOWNLOAD COMPLETE JSON BACKUP</button>
     </div>
@@ -878,6 +893,9 @@ function clearSession() {
   // Remove drafts and rendered private values before another account can enter.
   document.querySelectorAll('#mainApp input, #mainApp textarea').forEach(input => { input.value = ''; });
   el('accountEmail').textContent = el('accountUid').textContent = '';
+  el('profileName').value = el('profileAssociateId').value = '';
+  el('headerUserName').textContent = el('headerAssociateId').textContent = '';
+  el('userIdentity').hidden = true;
   setActiveDate(todayKey());
   doCancelEdit();
   clearZone();
@@ -916,6 +934,57 @@ function authError(error) {
   return messages[error.code] || 'The request failed. Please try again. (' + (error.code || 'connection error') + ')';
 }
 
+function cleanProfile(profile) {
+  const name = String(profile?.name || '').trim();
+  const associateId = String(profile?.associateId || '').trim();
+  return { name, associateId };
+}
+
+function renderAccountProfile() {
+  const profile = cleanProfile(appData.profile);
+  el('profileName').value = profile.name;
+  el('profileAssociateId').value = profile.associateId;
+  if (profile.name && profile.associateId) {
+    el('headerUserName').textContent = profile.name;
+    el('headerAssociateId').textContent = 'Associate ID: ' + profile.associateId;
+    el('userIdentity').hidden = false;
+  } else {
+    el('headerUserName').textContent = el('headerAssociateId').textContent = '';
+    el('userIdentity').hidden = true;
+  }
+}
+
+function pendingProfileKey(uid) { return 'pickratePendingProfile:' + uid; }
+
+function getPendingProfile(uid) {
+  try {
+    const raw = localStorage.getItem(pendingProfileKey(uid));
+    return raw ? cleanProfile(JSON.parse(raw)) : null;
+  } catch { return null; }
+}
+
+function setPendingProfile(uid, profile) {
+  try { localStorage.setItem(pendingProfileKey(uid), JSON.stringify(cleanProfile(profile))); } catch {}
+}
+
+function clearPendingProfile(uid) {
+  try { localStorage.removeItem(pendingProfileKey(uid)); } catch {}
+}
+
+async function applyPendingProfile(user) {
+  const pending = getPendingProfile(user.uid);
+  if (!pending?.name || !pending?.associateId) return;
+  const target = ref(db, 'users/' + user.uid);
+  const result = await runTransaction(target, current => {
+    const next = clone(current || {});
+    if (!next.days) next.days = {};
+    const existing = cleanProfile(next.profile);
+    if (!existing.name && !existing.associateId) next.profile = pending;
+    return next;
+  }, { applyLocally: false });
+  if (result.committed) clearPendingProfile(user.uid);
+}
+
 async function enterAccount(user) {
   clearSession();
   const version = sessionVersion;
@@ -928,6 +997,8 @@ async function enterAccount(user) {
   showAuth('Loading your account…');
   try {
     await getIdToken(user, true);
+    if (version !== sessionVersion || auth.currentUser?.uid !== user.uid) return;
+    await applyPendingProfile(user);
     if (version !== sessionVersion || auth.currentUser?.uid !== user.uid) return;
     sessionUid = user.uid;
     dataRef = ref(db, 'users/' + user.uid);
@@ -947,8 +1018,9 @@ async function enterAccount(user) {
       el('authPanel').hidden = true;
       el('loadingScreen').style.display = 'none';
       el('mainApp').style.display = 'block';
-      el('accountEmail').textContent = user.email;
+      el('accountEmail').textContent = 'Recovery email: ' + user.email;
       el('accountUid').textContent = user.uid;
+      renderAccountProfile();
       renderAll();
       updateSaveUI();
     }, () => {
@@ -987,6 +1059,9 @@ async function leaveAccount() {
 function wireAuthEvents() {
   el('authToggle').addEventListener('click', () => {
     registering = !registering;
+    el('profileSignupFields').hidden = !registering;
+    el('authName').required = registering;
+    el('authAssociateId').required = registering;
     el('confirmGroup').hidden = !registering;
     el('authConfirm').required = registering;
     el('authPassword').autocomplete = registering ? 'new-password' : 'current-password';
@@ -997,12 +1072,20 @@ function wireAuthEvents() {
   el('authForm').addEventListener('submit', event => {
     event.preventDefault();
     const email = el('authEmail').value.trim(), password = el('authPassword').value;
+    const signupProfile = registering ? cleanProfile({
+      name: el('authName').value,
+      associateId: el('authAssociateId').value
+    }) : null;
+    if (registering && (!signupProfile.name || !signupProfile.associateId)) {
+      el('authMessage').textContent = 'Enter your name and Associate ID.'; return;
+    }
     if (registering && password !== el('authConfirm').value) {
       el('authMessage').textContent = 'Passwords do not match.'; return;
     }
     authAction(async () => {
       if (registering) {
         const credential = await createUserWithEmailAndPassword(auth, email, password);
+        setPendingProfile(credential.user.uid, signupProfile);
         try {
           await sendEmailVerification(credential.user);
           showAuth('Verification email sent. Check your inbox and spam folder.');
@@ -1011,6 +1094,9 @@ function wireAuthEvents() {
         }
       } else await signInWithEmailAndPassword(auth, email, password);
       el('authPassword').value = el('authConfirm').value = '';
+      if (!registering) return;
+      el('authName').value = '';
+      el('authAssociateId').value = '';
     });
   });
   el('resetPassword').addEventListener('click', () => {
@@ -1037,6 +1123,15 @@ function wireAuthEvents() {
   el('retryAccount').addEventListener('click', refreshAccount);
   el('authSignOut').addEventListener('click', leaveAccount);
   el('accountSignOut').addEventListener('click', leaveAccount);
+  el('saveProfileBtn').addEventListener('click', async () => {
+    if (!dataReady || !auth.currentUser) return;
+    const profile = cleanProfile({ name: el('profileName').value, associateId: el('profileAssociateId').value });
+    if (!profile.name || !profile.associateId) { toast('Enter your name and Associate ID'); return; }
+    appData.profile = profile;
+    renderAccountProfile();
+    await saveData();
+    if (!saveFailed) toast('Profile saved');
+  });
   el('jsonBackupBtn').addEventListener('click', () => downloadJson(appData, 'account-backup'));
   el('downloadUnsaved').addEventListener('click', () => downloadJson(appData, 'unsaved'));
   el('reloadSaved').addEventListener('click', () => {
@@ -1601,6 +1696,7 @@ function switchTab(tab) {
   if (tab === 'summary') { renderSummary(); document.getElementById('dayNotes').value = getDay(activeKey).notes || ''; }
   if (tab === 'week') renderWeek();
   if (tab === 'history') renderHistory();
+  if (tab === 'import') renderAccountProfile();
   if (tab === 'stats') renderStats();
 }
  
