@@ -262,6 +262,10 @@
   .auth-panel .input-group { margin: 14px 0; }
   .auth-panel input { font-size: 16px; }
   .profile-signup-fields { margin-top: 4px; }
+  .remember-row { display:flex; align-items:center; gap:8px; margin:-2px 0 12px; font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); }
+  .remember-row input { width:auto; accent-color:var(--accent); }
+  .onboarding-copy { font-family:'DM Mono',monospace; font-size:12px; line-height:1.7; color:var(--muted); }
+  .onboarding-copy strong { color:var(--text); }
   .user-identity { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted); margin: 3px 0 9px; display: flex; gap: 9px; align-items: center; flex-wrap: wrap; cursor: pointer; width: fit-content; max-width: 100%; }
   .user-identity:hover .user-name { color: var(--accent); }
   .user-identity .user-name { color: var(--text); font-weight: 700; transition: color .2s; font-size: 15px; }
@@ -335,6 +339,7 @@
         <div class="input-group"><label for="authAssociateId">Associate ID</label><input id="authAssociateId" type="text" autocomplete="off" maxlength="40" spellcheck="false"></div>
       </div>
       <div class="input-group"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="username" required></div>
+      <label class="remember-row" id="rememberEmailRow"><input id="rememberEmail" type="checkbox"> Remember my email on this device</label>
       <div class="input-group"><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" required minlength="6"></div>
       <div class="input-group" id="confirmGroup" hidden><label for="authConfirm">Confirm password</label><input id="authConfirm" type="password" autocomplete="new-password"></div>
       <button class="btn-log" id="authSubmit" type="submit">SIGN IN</button>
@@ -594,6 +599,21 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<div class="modal-overlay" id="onboardingModal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle">
+  <div class="modal-box">
+    <div class="modal-title account-modal-title" id="onboardingTitle">WELCOME TO PICKRATE</div>
+    <div class="onboarding-copy">
+      <p><strong>Log</strong> is where you enter each order.</p>
+      <p><strong>Summary, Week, History, and Stats</strong> help you review your performance over time.</p>
+      <p>Your <strong>Account</strong> button at the top lets you update your name and Associate ID anytime.</p>
+      <p>Your PickRate history is tied to your private account and syncs across devices when you sign in.</p>
+    </div>
+    <div class="account-modal-actions">
+      <button class="btn-action" id="onboardingDone" type="button">GOT IT</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="accountModal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle">
   <div class="modal-box">
     <div class="modal-title account-modal-title" id="accountModalTitle">YOUR PROFILE</div>
@@ -796,6 +816,40 @@ let baseline = { days: {} }, latestSnapshot = null;
 let registering = false, authBusy = false;
 const el = id => document.getElementById(id);
 const clone = value => JSON.parse(JSON.stringify(value));
+const REMEMBERED_EMAIL_KEY = 'pickrateRememberedEmail';
+function loadRememberedEmail() {
+  try {
+    const remembered = localStorage.getItem(REMEMBERED_EMAIL_KEY) || '';
+    el('authEmail').value = remembered;
+    el('rememberEmail').checked = !!remembered;
+  } catch {}
+}
+function saveRememberedEmail(email) {
+  try {
+    if (el('rememberEmail').checked) localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+    else localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+  } catch {}
+}
+function onboardingKey(uid) { return 'pickrateOnboardingSeen:' + uid; }
+function onboardingSeen(uid) {
+  try { return localStorage.getItem(onboardingKey(uid)) === '1'; }
+  catch { return false; }
+}
+function markOnboardingSeen(uid) {
+  try { localStorage.setItem(onboardingKey(uid), '1'); } catch {}
+}
+function showOnboardingIfNeeded() {
+  const user = auth?.currentUser;
+  if (!user || onboardingSeen(user.uid)) return;
+  const profile = cleanProfile(appData.profile);
+  if (!profile.name || !profile.associateId) return;
+  el('onboardingModal').style.display = 'flex';
+}
+function closeOnboarding() {
+  const user = auth?.currentUser;
+  if (user) markOnboardingSeen(user.uid);
+  el('onboardingModal').style.display = 'none';
+}
 
 // Firebase drops null children and empty containers. Compare their wire form,
 // independent of property order, to detect concurrent edits to the same day.
@@ -910,6 +964,7 @@ function clearSession() {
   el('mainApp').inert = true;
   el('deleteModal').style.display = 'none';
   el('accountModal').style.display = 'none';
+  el('onboardingModal').style.display = 'none';
   el('saveNotice').hidden = true;
   // Remove drafts and rendered private values before another account can enter.
   document.querySelectorAll('#mainApp input, #mainApp textarea').forEach(input => { input.value = ''; });
@@ -938,6 +993,7 @@ function showAuth(message = '') {
   el('authSignOut').hidden = !signedIn;
   el('retryAccount').hidden = !signedIn || !user.emailVerified;
   el('authTitle').textContent = signedIn ? (user.emailVerified ? 'ACCOUNT CONNECTION' : 'VERIFY YOUR EMAIL') : registering ? 'CREATE ACCOUNT' : 'SIGN IN';
+  el('rememberEmailRow').hidden = registering || !!signedIn;
   el('verificationEmail').textContent = signedIn ? 'Open the verification link sent to ' + user.email + ', then continue here.' : '';
 }
 
@@ -1064,6 +1120,12 @@ async function enterAccount(user) {
       renderAccountProfile();
       renderAll();
       updateSaveUI();
+      const profile = cleanProfile(appData.profile);
+      if (!profile.name || !profile.associateId) {
+        setTimeout(openAccountModal, 150);
+      } else {
+        setTimeout(showOnboardingIfNeeded, 200);
+      }
     }, () => {
       if (version !== sessionVersion) return;
       if (saving || saveFailed) { saveFailed = true; updateSaveUI(); return; }
@@ -1108,6 +1170,7 @@ function wireAuthEvents() {
     el('authPassword').autocomplete = registering ? 'new-password' : 'current-password';
     el('authSubmit').textContent = registering ? 'CREATE ACCOUNT' : 'SIGN IN';
     el('authToggle').textContent = registering ? 'ALREADY HAVE AN ACCOUNT? SIGN IN' : 'CREATE AN ACCOUNT';
+    el('rememberEmailRow').hidden = registering;
     showAuth();
   });
   el('authForm').addEventListener('submit', event => {
@@ -1133,7 +1196,10 @@ function wireAuthEvents() {
         } catch (error) {
           showAuth('Account created. Verification email was not sent. Use RESEND. ' + authError(error));
         }
-      } else await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        saveRememberedEmail(email);
+        await signInWithEmailAndPassword(auth, email, password);
+      }
       el('authPassword').value = el('authConfirm').value = '';
       if (!registering) return;
       el('authName').value = '';
@@ -1163,12 +1229,18 @@ function wireAuthEvents() {
   el('checkVerification').addEventListener('click', refreshAccount);
   el('retryAccount').addEventListener('click', refreshAccount);
   el('authSignOut').addEventListener('click', leaveAccount);
+  el('onboardingDone').addEventListener('click', closeOnboarding);
+  el('onboardingModal').addEventListener('click', event => { if (event.target === el('onboardingModal')) closeOnboarding(); });
   el('accountBtn').addEventListener('click', openAccountModal);
   el('userIdentity').addEventListener('click', openAccountModal);
   el('manageProfileBtn').addEventListener('click', openAccountModal);
   el('accountModalClose').addEventListener('click', closeAccountModal);
   el('accountModal').addEventListener('click', event => { if (event.target === el('accountModal')) closeAccountModal(); });
-  document.addEventListener('keydown', event => { if (event.key === 'Escape' && el('accountModal').style.display !== 'none') closeAccountModal(); });
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    if (el('onboardingModal').style.display !== 'none') closeOnboarding();
+    else if (el('accountModal').style.display !== 'none') closeAccountModal();
+  });
   el('accountSignOut').addEventListener('click', leaveAccount);
   el('saveProfileBtn').addEventListener('click', async () => {
     if (!dataReady || !auth.currentUser) return;
@@ -1180,6 +1252,7 @@ function wireAuthEvents() {
     if (!saveFailed) {
       toast('Profile saved');
       closeAccountModal();
+      setTimeout(showOnboardingIfNeeded, 150);
     }
   });
   el('jsonBackupBtn').addEventListener('click', () => downloadJson(appData, 'account-backup'));
@@ -1193,6 +1266,7 @@ function wireAuthEvents() {
 }
 
 function initFirebase() {
+  loadRememberedEmail();
   try {
     const app = initializeApp(FB_CONFIG);
     db = getDatabase(app);
