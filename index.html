@@ -29,6 +29,11 @@
     --accent-rgb: 156,188,215; --accent2-rgb: 139,206,176; --warn-rgb: 239,164,134;
     --muted-rgb: 165,180,199; --border-rgb: 62,80,103;
   }
+  /* Give data graphics stronger color while keeping Slate's UI subdued. */
+  :root[data-theme="slate"] .chart-wrap {
+    --accent: #55baff; --accent2: #38df9b; --warn: #ff9866;
+    --accent-rgb: 85,186,255; --accent2-rgb: 56,223,155; --warn-rgb: 255,152,102;
+  }
   :root[data-theme="slate"] body::before { background-image: none; }
   :root[data-theme="slate"] .logo,
   :root[data-theme="slate"] .logo-big { color: var(--text); text-shadow: none; }
@@ -747,7 +752,7 @@ import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWith
  
 // Resolve canvas colors from the same palette used by the page.
 function themeColor(name, alpha) {
-  const styles = getComputedStyle(document.documentElement);
+  const styles = getComputedStyle(document.querySelector('.chart-wrap') || document.documentElement);
   return alpha === undefined ? styles.getPropertyValue('--' + name).trim()
     : 'rgba(' + styles.getPropertyValue('--' + name + '-rgb').trim() + ',' + alpha + ')';
 }
