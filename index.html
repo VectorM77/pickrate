@@ -2709,7 +2709,8 @@ function wireEvents() {
   // Log button — NOT disabled, just styled dimmed; we validate inside doLogOrder
   document.getElementById('logBtn').addEventListener('click', doLogOrder);
   document.getElementById('cancelBtn').addEventListener('click', doCancelEdit);
- 
+
+  
   // Date navigation
   document.getElementById('prevDayBtn').addEventListener('click', () => {
     setActiveDate(shiftKey(activeKey, -1));
